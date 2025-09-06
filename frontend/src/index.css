@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Manga reading website design system inspired by MangaLIB */
+
+@layer base {
+  :root {
+    /* Dark theme colors (default) */
+    --background: 220 13% 7%;
+    --foreground: 0 0% 95%;
+    --card: 220 13% 10%;
+    --card-foreground: 0 0% 95%;
+    --popover: 220 13% 10%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 25 95% 53%;
+    --primary-foreground: 220 13% 7%;
+    --secondary: 220 13% 15%;
+    --secondary-foreground: 0 0% 85%;
+    --muted: 220 13% 15%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 220 13% 15%;
+    --accent-foreground: 0 0% 85%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 13% 20%;
+    --input: 220 13% 15%;
+    --ring: 25 95% 53%;
+    --radius: 0.5rem;
+
+    /* Custom manga theme colors */
+    --manga-primary: 25 95% 53%;
+    --manga-primary-hover: 25 95% 45%;
+    --manga-dark: 220 13% 7%;
+    --manga-darker: 220 20% 5%;
+    --manga-card: 220 13% 10%;
+    --manga-card-hover: 220 13% 12%;
+    --manga-border: 220 13% 20%;
+    --manga-text: 0 0% 95%;
+    --manga-text-muted: 0 0% 65%;
+    --manga-success: 142 76% 36%;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(var(--manga-dark)), hsl(var(--manga-darker)));
+    --gradient-card: linear-gradient(145deg, hsl(var(--manga-card)), hsl(var(--manga-card-hover)));
+  }
+
+  /* Light theme colors */
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 25 95% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 25 95% 53%;
+
+    /* Custom manga theme colors for light mode */
+    --manga-primary: 25 95% 53%;
+    --manga-primary-hover: 25 95% 45%;
+    --manga-dark: 0 0% 100%;
+    --manga-darker: 210 40% 98%;
+    --manga-card: 0 0% 100%;
+    --manga-card-hover: 210 40% 96%;
+    --manga-border: 214.3 31.8% 91.4%;
+    --manga-text: 222.2 84% 4.9%;
+    --manga-text-muted: 215.4 16.3% 46.9%;
+    --manga-success: 142 76% 36%;
+
+    /* Gradients for light mode */
+    --gradient-hero: linear-gradient(135deg, hsl(var(--manga-dark)), hsl(var(--manga-darker)));
+    --gradient-card: linear-gradient(145deg, hsl(var(--manga-card)), hsl(var(--manga-card-hover)));
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .carousel-container:hover .nav-button-left,
+  .carousel-container:hover .nav-button-right {
+    opacity: 1;
+  }
+}
