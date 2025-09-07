@@ -266,6 +266,15 @@ class ChapterAdmin(admin.ModelAdmin):
             obj.approved_by = request.user
             obj.approved_at = timezone.now()
         
+        # Handle file field for existing chapters that might have dangling references
+        if change and obj.file:
+            try:
+                # Try to access the file to see if it exists
+                _ = obj.file.size
+            except (OSError, FileNotFoundError):
+                # File doesn't exist, clear the field
+                obj.file = None
+        
         super().save_model(request, obj, form, change)
 
 

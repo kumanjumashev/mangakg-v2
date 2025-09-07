@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { LoadingState } from "@/components/ui/loading-spinner";
 import { ErrorPage } from "@/components/ui/error-page";
 import { useChapterPages, useSeriesList } from "@/hooks/useApi";
+import { useContinueReading } from "@/hooks/useContinueReading";
 
 const ReaderPage = () => {
   const { chapterId } = useParams<{ chapterId: string }>();
@@ -14,6 +15,9 @@ const ReaderPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState("single"); // single, double, vertical
   const [zoom, setZoom] = useState(100);
+  
+  // Continue reading functionality
+  const { addProgress } = useContinueReading();
   
   // Fetch chapter pages
   const { 
@@ -46,6 +50,23 @@ const ReaderPage = () => {
   const navigateToChapter = (chapterId: number) => {
     navigate(`/read/${chapterId}`);
   };
+
+  // Track reading progress when chapter data loads
+  useEffect(() => {
+    if (chapterData && series && seriesId) {
+      // Add/update progress in continue reading
+      addProgress({
+        mangaId: seriesId.toString(),
+        mangaTitle: chapterData.series_title,
+        mangaSlug: chapterData.series_slug,
+        coverImage: series.cover_url || "/api/placeholder/300/400",
+        currentChapter: chapterData.number,
+        currentChapterTitle: chapterData.title,
+        currentChapterId: chapterId || "",
+        totalChapters: series.chapter_count || 1
+      });
+    }
+  }, [chapterData, series, seriesId, chapterId, addProgress]);
 
   // Auto-scroll to top when changing pages in single/double mode
   useEffect(() => {

@@ -359,9 +359,17 @@ class Chapter(models.Model):
         is_new = self.pk is None
         super().save(*args, **kwargs)
         
-        # Process uploaded file
+        # Process uploaded file if it exists and this is a new chapter
         if self.file and is_new:
-            self.process_uploaded_file()
+            try:
+                self.process_uploaded_file()
+            except Exception:
+                # If processing fails and we have a file, clean it up
+                if self.file:
+                    self.file.delete(save=False)
+                    self.file = None
+                    self.save(update_fields=['file'])
+                raise
 
     def process_uploaded_file(self):
         """Process the uploaded ZIP file and extract pages."""
@@ -431,8 +439,10 @@ class Chapter(models.Model):
             self.pages.all().delete()
             Page.objects.bulk_create(pages)
             
-            # Clean up uploaded file
+            # Clean up uploaded file and clear the field
             self.file.delete(save=False)
+            self.file = None
+            self.save(update_fields=['file'])
             
         except BadZipfile:
             raise ValidationError('Invalid ZIP file format')

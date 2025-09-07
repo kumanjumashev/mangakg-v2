@@ -18,6 +18,10 @@ def validate_file_size(file: UploadedFile, max_size_mb: int = 500):
         file: The uploaded file
         max_size_mb: Maximum size in MB (default: 500MB)
     """
+    # Skip validation if file is None or empty
+    if not file:
+        return
+        
     max_size = max_size_mb * 1024 * 1024  # Convert to bytes
     
     if file.size > max_size:
@@ -36,6 +40,10 @@ def validate_zip_file(file: UploadedFile):
     Raises:
         ValidationError: If the file is not a valid ZIP or contains invalid content
     """
+    # Skip validation if file is None or empty
+    if not file:
+        return
+        
     # Check MIME type
     content_type = getattr(file, 'content_type', None)
     if content_type and content_type not in ['application/zip', 'application/x-zip-compressed']:
