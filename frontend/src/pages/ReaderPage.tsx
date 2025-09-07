@@ -10,9 +10,9 @@ import { useChapterPages, useSeriesList } from "@/hooks/useApi";
 import { useContinueReading } from "@/hooks/useContinueReading";
 
 const ReaderPage = () => {
-  const { chapterId } = useParams<{ chapterId: string }>();
+  const { chapterId, page } = useParams<{ chapterId: string; page?: string }>();
   const navigate = useNavigate();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(page ? parseInt(page) : 1);
   const [viewMode, setViewMode] = useState("single"); // single, double, vertical
   const [zoom, setZoom] = useState(100);
   
@@ -34,17 +34,33 @@ const ReaderPage = () => {
 
   const totalPages = chapterData?.pages.length || 0;
   
+  // Update current page when page parameter changes
+  useEffect(() => {
+    if (page) {
+      const pageNum = parseInt(page);
+      if (pageNum >= 1 && pageNum <= totalPages) {
+        setCurrentPage(pageNum);
+      }
+    }
+  }, [page, totalPages]);
+
   const nextPage = useCallback(() => {
     if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+      const newPage = currentPage + 1;
+      setCurrentPage(newPage);
+      // Update URL to reflect current page
+      navigate(`/read/${chapterId}/${newPage}`, { replace: true });
     }
-  }, [currentPage, totalPages]);
+  }, [currentPage, totalPages, chapterId, navigate]);
   
   const prevPage = useCallback(() => {
     if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+      const newPage = currentPage - 1;
+      setCurrentPage(newPage);
+      // Update URL to reflect current page
+      navigate(`/read/${chapterId}/${newPage}`, { replace: true });
     }
-  }, [currentPage]);
+  }, [currentPage, chapterId, navigate]);
   
   // Navigation helpers (these would need additional API calls to get chapter list)
   const navigateToChapter = (chapterId: number) => {
@@ -334,7 +350,11 @@ const ReaderPage = () => {
 
             <Select 
               value={currentPage.toString()} 
-              onValueChange={(value) => setCurrentPage(parseInt(value))}
+              onValueChange={(value) => {
+                const newPage = parseInt(value);
+                setCurrentPage(newPage);
+                navigate(`/read/${chapterId}/${newPage}`, { replace: true });
+              }}
             >
               <SelectTrigger className="bg-manga-card border-manga-border text-manga-text w-32">
                 <SelectValue />

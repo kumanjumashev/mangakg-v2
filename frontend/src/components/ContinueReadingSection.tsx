@@ -99,7 +99,9 @@ interface ContinueReadingCardProps {
 }
 
 const ContinueReadingCard = ({ item, onRemove }: ContinueReadingCardProps) => {
-  const linkTo = `/manga/${item.mangaSlug}`;
+  const linkTo = item.currentChapterId ? 
+    `/read/${item.currentChapterId}/${item.currentPage}` : 
+    `/manga/${item.mangaId}`;
 
   return (
     <div className="bg-manga-card hover:bg-manga-card-hover rounded-lg p-4 transition-colors duration-300 group relative">
