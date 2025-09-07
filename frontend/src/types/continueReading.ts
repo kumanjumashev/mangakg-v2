@@ -6,9 +6,11 @@ export interface ContinueReadingItem {
   currentChapter: number;
   currentChapterTitle?: string;
   currentChapterId?: string;
+  currentPage: number;
+  totalPagesInChapter: number;
   totalChapters: number;
   lastReadAt: string; // ISO string
-  progressPercentage: number; // 0-100
+  progressPercentage: number; // 0-100 (page progress within chapter)
 }
 
 export interface ContinueReadingData {
@@ -28,6 +30,8 @@ export interface AddProgressParams {
   currentChapter: number;
   currentChapterTitle?: string;
   currentChapterId?: string;
+  currentPage: number;
+  totalPagesInChapter: number;
   totalChapters: number;
 }
 

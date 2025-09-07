@@ -51,7 +51,7 @@ const ReaderPage = () => {
     navigate(`/read/${chapterId}`);
   };
 
-  // Track reading progress when chapter data loads
+  // Track reading progress when chapter data loads or page changes
   useEffect(() => {
     if (chapterData && series && seriesId) {
       // Add/update progress in continue reading
@@ -63,10 +63,12 @@ const ReaderPage = () => {
         currentChapter: chapterData.number,
         currentChapterTitle: chapterData.title,
         currentChapterId: chapterId || "",
+        currentPage: currentPage,
+        totalPagesInChapter: totalPages,
         totalChapters: series.chapter_count || 1
       });
     }
-  }, [chapterData, series, seriesId, chapterId, addProgress]);
+  }, [chapterData, series, seriesId, chapterId, currentPage, totalPages, addProgress]);
 
   // Auto-scroll to top when changing pages in single/double mode
   useEffect(() => {

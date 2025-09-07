@@ -63,8 +63,8 @@ export function useContinueReading(): ContinueReadingHookReturn {
             mangaTitle: mangaData.title || item.mangaTitle,
             coverImage: mangaData.cover_url || item.coverImage,
             totalChapters,
-            progressPercentage: totalChapters > 0 ? 
-              Math.round((item.currentChapter / totalChapters) * 100) : 0
+            progressPercentage: item.totalPagesInChapter > 0 ? 
+              Math.round((item.currentPage / item.totalPagesInChapter) * 100) : 0
           };
           
           validatedItems.push(updatedItem);
@@ -140,12 +140,14 @@ export function useContinueReading(): ContinueReadingHookReturn {
   const updateProgress = useCallback((
     mangaId: string, 
     currentChapter: number, 
+    currentPage: number,
+    totalPagesInChapter: number,
     totalChapters: number, 
     chapterTitle?: string, 
     chapterId?: string
   ) => {
     try {
-      updateReadingProgress(mangaId, currentChapter, totalChapters, chapterTitle, chapterId);
+      updateReadingProgress(mangaId, currentChapter, currentPage, totalPagesInChapter, totalChapters, chapterTitle, chapterId);
       const updatedItems = getContinueReadingItems();
       setItems(updatedItems);
       setError(null);
