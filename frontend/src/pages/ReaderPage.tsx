@@ -1,62 +1,128 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, ArrowLeft, Menu, Settings, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-
-// Mock data
-const mangaInfo = {
-  id: "1",
-  title: "Attack on Titan",
-  alternativeTitle: "Shingeki no Kyojin",
-  totalChapters: 139
-};
-
-const currentChapter = {
-  number: 1,
-  volume: 1,
-  pages: Array.from({ length: 20 }, (_, i) => ({
-    id: i + 1,
-    url: "/api/placeholder/800/1200"
-  }))
-};
+import { LoadingState } from "@/components/ui/loading-spinner";
+import { ErrorPage } from "@/components/ui/error-page";
+import { useChapterPages, useSeriesList } from "@/hooks/useApi";
 
 const ReaderPage = () => {
-  const { mangaId, chapterNumber } = useParams();
+  const { chapterId } = useParams<{ chapterId: string }>();
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState("single"); // single, double, vertical
   const [zoom, setZoom] = useState(100);
   
-  const totalPages = currentChapter.pages.length;
+  // Fetch chapter pages
+  const { 
+    data: chapterData, 
+    isLoading, 
+    error,
+    refetch 
+  } = useChapterPages(parseInt(chapterId || "0"));
+
+  // Fetch series list to find series ID from slug
+  const { data: seriesListData } = useSeriesList({ page_size: 100 });
+  const series = seriesListData?.results.find(s => s.slug === chapterData?.series_slug);
+  const seriesId = series?.id;
+
+  const totalPages = chapterData?.pages.length || 0;
   
-  const nextPage = () => {
+  const nextPage = useCallback(() => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
-  };
+  }, [currentPage, totalPages]);
   
-  const prevPage = () => {
+  const prevPage = useCallback(() => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
     }
-  };
+  }, [currentPage]);
   
-  const nextChapter = () => {
-    // Navigate to next chapter
-    const nextChapterNum = parseInt(chapterNumber || "1") + 1;
-    if (nextChapterNum <= mangaInfo.totalChapters) {
-      window.location.href = `/read/${mangaId}/${nextChapterNum}`;
-    }
+  // Navigation helpers (these would need additional API calls to get chapter list)
+  const navigateToChapter = (chapterId: number) => {
+    navigate(`/read/${chapterId}`);
   };
-  
-  const prevChapter = () => {
-    // Navigate to previous chapter  
-    const prevChapterNum = parseInt(chapterNumber || "1") - 1;
-    if (prevChapterNum >= 1) {
-      window.location.href = `/read/${mangaId}/${prevChapterNum}`;
+
+  // Auto-scroll to top when changing pages in single/double mode
+  useEffect(() => {
+    if (viewMode !== "vertical") {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
+  }, [currentPage, viewMode]);
+
+  // Preload next few images for better performance
+  useEffect(() => {
+    if (chapterData?.pages && viewMode === "single") {
+      const preloadCount = 3;
+      for (let i = currentPage; i < Math.min(currentPage + preloadCount, chapterData.pages.length); i++) {
+        const img = new Image();
+        img.src = chapterData.pages[i].image_url;
+      }
+    }
+  }, [currentPage, chapterData?.pages, viewMode]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      switch (event.key) {
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+          event.preventDefault();
+          prevPage();
+          break;
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+          event.preventDefault();
+          nextPage();
+          break;
+        case 'ArrowUp':
+        case 'w':
+        case 'W':
+          if (viewMode !== "vertical") {
+            event.preventDefault();
+            window.scrollBy(0, -100);
+          }
+          break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          if (viewMode !== "vertical") {
+            event.preventDefault();
+            window.scrollBy(0, 100);
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [nextPage, prevPage, viewMode]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-manga-darker">
+        <LoadingState message="Loading chapter..." className="py-24" />
+      </div>
+    );
+  }
+
+  if (error || !chapterData) {
+    return (
+      <div className="min-h-screen bg-manga-darker">
+        <ErrorPage 
+          error={error} 
+          onRetry={refetch}
+          className="py-24"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-manga-darker">
@@ -74,7 +140,7 @@ const ReaderPage = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-manga-card border-manga-border">
                 <DropdownMenuItem asChild>
-                  <Link to={`/manga/${mangaId}`} className="text-manga-text hover:text-manga-primary">
+                  <Link to={`/manga/${seriesId || chapterData.series_slug}`} className="text-manga-text hover:text-manga-primary">
                     Back to Details
                   </Link>
                 </DropdownMenuItem>
@@ -88,50 +154,23 @@ const ReaderPage = () => {
             
             {/* Manga Title */}
             <div>
-              <h1 className="text-manga-text font-bold text-lg">{mangaInfo.title}</h1>
-              <p className="text-manga-text-muted text-sm">{mangaInfo.alternativeTitle}</p>
+              <h1 className="text-manga-text font-bold text-lg">{chapterData.series_title}</h1>
+              <p className="text-manga-text-muted text-sm">
+                Chapter {chapterData.number}: {chapterData.title}
+              </p>
             </div>
           </div>
 
-          {/* Center - Chapter Navigation */}
+          {/* Center - Chapter Info */}
           <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={prevChapter}
-              className="text-manga-text hover:text-manga-primary"
-              disabled={parseInt(chapterNumber || "1") <= 1}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            
-            <Select 
-              value={chapterNumber} 
-              onValueChange={(value) => window.location.href = `/read/${mangaId}/${value}`}
-            >
-              <SelectTrigger className="bg-manga-card border-manga-border text-manga-text min-w-[200px]">
-                <SelectValue>
-                  Vol. {currentChapter.volume}; Chapter {chapterNumber}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="bg-manga-card border-manga-border max-h-60">
-                {Array.from({ length: mangaInfo.totalChapters }, (_, i) => (
-                  <SelectItem key={i + 1} value={`${i + 1}`} className="text-manga-text">
-                    Vol. {Math.ceil((i + 1) / 4)}; Chapter {i + 1}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={nextChapter}
-              className="text-manga-text hover:text-manga-primary"
-              disabled={parseInt(chapterNumber || "1") >= mangaInfo.totalChapters}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+            <div className="text-center">
+              <p className="text-manga-text font-medium">
+                Chapter {chapterData.number}
+              </p>
+              <p className="text-manga-text-muted text-sm">
+                {totalPages} pages
+              </p>
+            </div>
           </div>
 
           {/* Right Side - Settings */}
@@ -173,26 +212,38 @@ const ReaderPage = () => {
       {/* Reader Content */}
       <main className="container mx-auto px-4 py-4">
         {/* Page Counter */}
-        <div className="text-center mb-4">
-          <span className="text-manga-text-muted">
-            Page {currentPage} of {totalPages}
-          </span>
-        </div>
+        {viewMode !== "vertical" && (
+          <div className="text-center mb-4">
+            <span className="text-manga-text-muted">
+              Page {currentPage} of {totalPages}
+            </span>
+          </div>
+        )}
 
         {/* Manga Pages */}
         <div className="flex justify-center">
           <div 
             className="relative max-w-4xl"
-            style={{ transform: `scale(${zoom / 100})` }}
+            style={{ 
+              transform: viewMode !== "vertical" ? `scale(${zoom / 100})` : undefined,
+              transformOrigin: 'top center'
+            }}
           >
             {viewMode === "single" && (
               <div className="flex justify-center">
                 <img
-                  src={currentChapter.pages[currentPage - 1]?.url}
+                  src={chapterData.pages[currentPage - 1]?.image_url}
                   alt={`Page ${currentPage}`}
-                  className="max-w-full h-auto shadow-2xl rounded-lg"
+                  className="max-w-full h-auto shadow-2xl rounded-lg cursor-pointer"
                   onClick={nextPage}
-                  style={{ cursor: currentPage < totalPages ? "pointer" : "default" }}
+                  style={{ 
+                    maxHeight: '90vh',
+                    width: 'auto',
+                    cursor: currentPage < totalPages ? "pointer" : "default" 
+                  }}
+                  onError={(e) => {
+                    e.currentTarget.src = "/api/placeholder/800/1200";
+                  }}
                 />
               </div>
             )}
@@ -201,27 +252,43 @@ const ReaderPage = () => {
               <div className="flex justify-center space-x-4">
                 {currentPage > 1 && (
                   <img
-                    src={currentChapter.pages[currentPage - 2]?.url}
+                    src={chapterData.pages[currentPage - 2]?.image_url}
                     alt={`Page ${currentPage - 1}`}
                     className="max-w-md h-auto shadow-2xl rounded-lg"
+                    style={{ maxHeight: '90vh' }}
+                    onError={(e) => {
+                      e.currentTarget.src = "/api/placeholder/800/1200";
+                    }}
                   />
                 )}
                 <img
-                  src={currentChapter.pages[currentPage - 1]?.url}
+                  src={chapterData.pages[currentPage - 1]?.image_url}
                   alt={`Page ${currentPage}`}
-                  className="max-w-md h-auto shadow-2xl rounded-lg"
+                  className="max-w-md h-auto shadow-2xl rounded-lg cursor-pointer"
+                  style={{ maxHeight: '90vh' }}
+                  onClick={nextPage}
+                  onError={(e) => {
+                    e.currentTarget.src = "/api/placeholder/800/1200";
+                  }}
                 />
               </div>
             )}
             
             {viewMode === "vertical" && (
               <div className="space-y-4">
-                {currentChapter.pages.map((page) => (
+                {chapterData.pages.map((page) => (
                   <img
                     key={page.id}
-                    src={page.url}
-                    alt={`Page ${page.id}`}
+                    src={page.image_url}
+                    alt={`Page ${page.number}`}
                     className="max-w-full h-auto shadow-2xl rounded-lg mx-auto block"
+                    style={{ 
+                      width: `${zoom}%`,
+                      maxWidth: '800px'
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.src = "/api/placeholder/800/1200";
+                    }}
                   />
                 ))}
               </div>
@@ -250,9 +317,9 @@ const ReaderPage = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-manga-card border-manga-border max-h-60">
-                {currentChapter.pages.map((_, index) => (
-                  <SelectItem key={index + 1} value={`${index + 1}`} className="text-manga-text">
-                    Page {index + 1}
+                {chapterData.pages.map((page) => (
+                  <SelectItem key={page.number} value={page.number.toString()} className="text-manga-text">
+                    Page {page.number}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -270,25 +337,20 @@ const ReaderPage = () => {
           </div>
         )}
 
-        {/* Chapter Navigation */}
+        {/* Chapter Navigation Placeholder */}
         <div className="flex justify-center space-x-4 mt-8">
           <Button
-            onClick={prevChapter}
-            disabled={parseInt(chapterNumber || "1") <= 1}
+            onClick={() => navigate(`/manga/${seriesId || chapterData.series_slug}`)}
             className="bg-manga-primary hover:bg-manga-primary-hover text-manga-dark"
           >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Previous Chapter
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Series
           </Button>
-          
-          <Button
-            onClick={nextChapter}
-            disabled={parseInt(chapterNumber || "1") >= mangaInfo.totalChapters}
-            className="bg-manga-primary hover:bg-manga-primary-hover text-manga-dark"
-          >
-            Next Chapter
-            <ChevronRight className="w-4 h-4 ml-2" />
-          </Button>
+        </div>
+
+        {/* Keyboard shortcuts info */}
+        <div className="text-center mt-8 text-manga-text-muted text-sm">
+          <p>Use arrow keys, WASD, or click to navigate pages</p>
         </div>
       </main>
     </div>

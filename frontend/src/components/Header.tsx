@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Moon, Sun, Search, MessageCircle, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,9 @@ export const Header = () => {
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
@@ -25,6 +27,21 @@ export const Header = () => {
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      navigate(`/catalogue?search=${encodeURIComponent(searchTerm.trim())}`);
+      setSearchTerm("");
+      setIsMobileMenuOpen(false);
+    }
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch(e);
+    }
   };
 
   const isActive = (path: string) => location.pathname === path;
@@ -59,13 +76,16 @@ export const Header = () => {
             >
               About
             </Link>
-            <div className="relative">
+            <form onSubmit={handleSearch} className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-manga-text-muted w-4 h-4" />
               <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={handleSearchKeyPress}
                 placeholder="Search manga..."
                 className="pl-10 w-64 bg-manga-card border-manga-border text-manga-text placeholder:text-manga-text-muted"
               />
-            </div>
+            </form>
             <Button variant="ghost" size="sm" className="text-manga-text hover:text-manga-primary">
               <MessageCircle className="w-4 h-4 mr-2" />
               Forum
@@ -117,13 +137,16 @@ export const Header = () => {
               >
                 About
               </Link>
-              <div className="relative">
+              <form onSubmit={handleSearch} className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-manga-text-muted w-4 h-4" />
                 <Input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
                   placeholder="Search manga..."
                   className="pl-10 bg-manga-card border-manga-border text-manga-text placeholder:text-manga-text-muted"
                 />
-              </div>
+              </form>
               <Button variant="ghost" size="sm" className="text-manga-text hover:text-manga-primary justify-start">
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Forum

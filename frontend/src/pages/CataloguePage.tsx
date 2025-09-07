@@ -1,54 +1,126 @@
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { MangaCard } from "@/components/MangaCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Filter, SlidersHorizontal, Search } from "lucide-react";
+import { LoadingState } from "@/components/ui/loading-spinner";
+import { ErrorPage } from "@/components/ui/error-page";
+import { Filter, SlidersHorizontal, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-// Mock data
-const allMangas = Array.from({ length: 20 }, (_, i) => ({
-  id: `manga-${i + 1}`,
-  title: `Manga Title ${i + 1}`,
-  rating: Math.round((Math.random() * 2 + 8) * 10) / 10,
-  coverImage: "/api/placeholder/300/400",
-  latestChapter: Math.floor(Math.random() * 200) + 1
-}));
-
-const genres = [
-  "Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", 
-  "Mystery", "Romance", "Sci-Fi", "Slice of Life", "Sports", "Supernatural"
-];
-
-const tags = [
-  "School Life", "Martial Arts", "Magic", "Demons", "Gods", "Military",
-  "Historical", "Medical", "Music", "Cooking", "Gaming", "Reincarnation"
-];
+import { useSeriesList, useCategories } from "@/hooks/useApi";
+import { useDebounce } from "@/lib/utils/debounce";
+import { SearchParams, SeriesStatus } from "@/lib/types";
 
 const CataloguePage = () => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Initialize state from URL parameters
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || "");
   const [sortBy, setSortBy] = useState("popularity");
-  const [mangaType, setMangaType] = useState("all");
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [status, setStatus] = useState<SeriesStatus | "all">("all");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const handleGenreChange = (genre: string, checked: boolean) => {
-    if (checked) {
-      setSelectedGenres(prev => [...prev, genre]);
-    } else {
-      setSelectedGenres(prev => prev.filter(g => g !== genre));
-    }
+  // Debounce search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  // Build API parameters
+  const apiParams: SearchParams = {
+    page: currentPage,
+    page_size: 24, // 4x6 grid
+    ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
+    ...(status !== "all" && { status: status as SeriesStatus }),
+    ...(selectedCategories.length > 0 && { categories: selectedCategories }),
   };
 
-  const handleTagChange = (tag: string, checked: boolean) => {
-    if (checked) {
-      setSelectedTags(prev => [...prev, tag]);
-    } else {
-      setSelectedTags(prev => prev.filter(t => t !== tag));
+  // API calls
+  const { 
+    data: seriesData, 
+    isLoading: seriesLoading, 
+    error: seriesError,
+    refetch: refetchSeries 
+  } = useSeriesList(apiParams);
+
+  const { 
+    data: categoriesData, 
+    isLoading: categoriesLoading, 
+    error: categoriesError 
+  } = useCategories();
+
+  // Update search term when URL changes
+  useEffect(() => {
+    const urlSearch = searchParams.get('search') || "";
+    if (urlSearch !== searchTerm) {
+      setSearchTerm(urlSearch);
     }
+  }, [searchParams]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [debouncedSearchTerm, status, selectedCategories]);
+
+  // Handle category selection
+  const handleCategoryChange = useCallback((categorySlug: string, checked: boolean) => {
+    if (checked) {
+      setSelectedCategories(prev => [...prev, categorySlug]);
+    } else {
+      setSelectedCategories(prev => prev.filter(c => c !== categorySlug));
+    }
+  }, []);
+
+  // Clear all filters
+  const clearFilters = useCallback(() => {
+    setSearchTerm("");
+    setStatus("all");
+    setSelectedCategories([]);
+    setCurrentPage(1);
+  }, []);
+
+  // Pagination helpers
+  const totalPages = seriesData ? Math.ceil(seriesData.count / 24) : 0;
+  const hasNextPage = !!seriesData?.next;
+  const hasPrevPage = !!seriesData?.previous;
+
+  // Handle pagination
+  const goToPage = useCallback((page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  // Generate pagination numbers
+  const getPaginationNumbers = () => {
+    const delta = 2;
+    const range = [];
+    const rangeWithDots = [];
+
+    for (let i = Math.max(2, currentPage - delta); 
+         i <= Math.min(totalPages - 1, currentPage + delta); 
+         i++) {
+      range.push(i);
+    }
+
+    if (currentPage - delta > 2) {
+      rangeWithDots.push(1, '...');
+    } else {
+      rangeWithDots.push(1);
+    }
+
+    rangeWithDots.push(...range);
+
+    if (currentPage + delta < totalPages - 1) {
+      rangeWithDots.push('...', totalPages);
+    } else if (totalPages > 1) {
+      rangeWithDots.push(totalPages);
+    }
+
+    return rangeWithDots;
   };
 
   return (
@@ -61,9 +133,19 @@ const CataloguePage = () => {
           <aside className="w-80 flex-shrink-0">
             <Card className="bg-manga-card border-manga-border">
               <CardHeader>
-                <CardTitle className="text-manga-text flex items-center">
-                  <Filter className="w-5 h-5 mr-2" />
-                  Filters
+                <CardTitle className="text-manga-text flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Filter className="w-5 h-5 mr-2" />
+                    Filters
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={clearFilters}
+                    className="text-manga-text-muted hover:text-manga-primary text-xs"
+                  >
+                    Clear All
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -101,76 +183,54 @@ const CataloguePage = () => {
                   </Select>
                 </div>
 
-                {/* Type */}
+                {/* Status */}
                 <div>
                   <label className="text-manga-text text-sm font-medium mb-2 block">
-                    Type
+                    Status
                   </label>
-                  <Select value={mangaType} onValueChange={setMangaType}>
+                  <Select value={status} onValueChange={(value) => setStatus(value as SeriesStatus | "all")}>
                     <SelectTrigger className="bg-manga-darker border-manga-border text-manga-text">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-manga-card border-manga-border">
                       <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="manga">Manga</SelectItem>
-                      <SelectItem value="manhwa">Manhwa</SelectItem>
-                      <SelectItem value="manhua">Manhua</SelectItem>
+                      <SelectItem value="ongoing">Ongoing</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="hiatus">Hiatus</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* Genres */}
+                {/* Categories */}
                 <div>
                   <label className="text-manga-text text-sm font-medium mb-2 block">
-                    Genres
+                    Categories
                   </label>
-                  <div className="max-h-48 overflow-y-auto space-y-2">
-                    {genres.map((genre) => (
-                      <div key={genre} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`genre-${genre}`}
-                          checked={selectedGenres.includes(genre)}
-                          onCheckedChange={(checked) => handleGenreChange(genre, !!checked)}
-                        />
-                        <label
-                          htmlFor={`genre-${genre}`}
-                          className="text-manga-text text-sm cursor-pointer"
-                        >
-                          {genre}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
+                  {categoriesLoading ? (
+                    <LoadingState message="Loading categories..." className="py-4" />
+                  ) : categoriesError ? (
+                    <p className="text-manga-danger text-sm">Failed to load categories</p>
+                  ) : (
+                    <div className="max-h-48 overflow-y-auto space-y-2">
+                      {categoriesData?.results.map((category) => (
+                        <div key={category.slug} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`category-${category.slug}`}
+                            checked={selectedCategories.includes(category.slug)}
+                            onCheckedChange={(checked) => handleCategoryChange(category.slug, !!checked)}
+                          />
+                          <label
+                            htmlFor={`category-${category.slug}`}
+                            className="text-manga-text text-sm cursor-pointer"
+                          >
+                            {category.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-
-                {/* Tags */}
-                <div>
-                  <label className="text-manga-text text-sm font-medium mb-2 block">
-                    Tags
-                  </label>
-                  <div className="max-h-48 overflow-y-auto space-y-2">
-                    {tags.map((tag) => (
-                      <div key={tag} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`tag-${tag}`}
-                          checked={selectedTags.includes(tag)}
-                          onCheckedChange={(checked) => handleTagChange(tag, !!checked)}
-                        />
-                        <label
-                          htmlFor={`tag-${tag}`}
-                          className="text-manga-text text-sm cursor-pointer"
-                        >
-                          {tag}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Apply Filters Button */}
-                <Button className="w-full bg-manga-primary hover:bg-manga-primary-hover text-manga-dark">
-                  Apply Filters
-                </Button>
               </CardContent>
             </Card>
           </aside>
@@ -180,9 +240,11 @@ const CataloguePage = () => {
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-2xl font-bold text-manga-text">Catalogue</h1>
               <div className="flex items-center space-x-4">
-                <span className="text-manga-text-muted text-sm">
-                  {allMangas.length} manga found
-                </span>
+                {!seriesLoading && (
+                  <span className="text-manga-text-muted text-sm">
+                    {seriesData?.count || 0} manga found
+                  </span>
+                )}
                 <Button
                   variant="ghost" 
                   size="sm"
@@ -195,31 +257,87 @@ const CataloguePage = () => {
               </div>
             </div>
 
-            {/* Manga Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {allMangas.map((manga) => (
-                <MangaCard key={manga.id} {...manga} />
-              ))}
-            </div>
-
-            {/* Pagination */}
-            <div className="flex justify-center mt-8">
-              <div className="flex space-x-2">
-                <Button variant="ghost" className="text-manga-text hover:text-manga-primary">
-                  Previous
-                </Button>
-                <Button className="bg-manga-primary text-manga-dark">1</Button>
-                <Button variant="ghost" className="text-manga-text hover:text-manga-primary">
-                  2
-                </Button>
-                <Button variant="ghost" className="text-manga-text hover:text-manga-primary">
-                  3
-                </Button>
-                <Button variant="ghost" className="text-manga-text hover:text-manga-primary">
-                  Next
+            {/* Main Content Area */}
+            {seriesLoading ? (
+              <LoadingState message="Loading manga catalogue..." className="py-24" />
+            ) : seriesError ? (
+              <ErrorPage 
+                error={seriesError} 
+                onRetry={refetchSeries}
+                className="py-24"
+              />
+            ) : !seriesData?.results.length ? (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <Search className="w-16 h-16 text-manga-text-muted mb-4" />
+                <h3 className="text-xl font-bold text-manga-text mb-2">
+                  No manga found
+                </h3>
+                <p className="text-manga-text-muted mb-4">
+                  Try adjusting your search criteria or clearing filters.
+                </p>
+                <Button 
+                  onClick={clearFilters}
+                  className="bg-manga-primary hover:bg-manga-primary-hover text-manga-dark"
+                >
+                  Clear Filters
                 </Button>
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Manga Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                  {seriesData.results.map((series) => (
+                    <MangaCard key={series.slug} series={series} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center mt-8">
+                    <div className="flex items-center space-x-2">
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => goToPage(currentPage - 1)}
+                        disabled={!hasPrevPage}
+                        className="text-manga-text hover:text-manga-primary disabled:opacity-50"
+                      >
+                        <ChevronLeft className="w-4 h-4 mr-1" />
+                        Previous
+                      </Button>
+                      
+                      {getPaginationNumbers().map((page, index) => (
+                        <div key={index}>
+                          {page === '...' ? (
+                            <span className="text-manga-text-muted px-2">...</span>
+                          ) : (
+                            <Button
+                              variant={currentPage === page ? "default" : "ghost"}
+                              onClick={() => goToPage(page as number)}
+                              className={currentPage === page 
+                                ? "bg-manga-primary text-manga-dark" 
+                                : "text-manga-text hover:text-manga-primary"
+                              }
+                            >
+                              {page}
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                      
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => goToPage(currentPage + 1)}
+                        disabled={!hasNextPage}
+                        className="text-manga-text hover:text-manga-primary disabled:opacity-50"
+                      >
+                        Next
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </main>

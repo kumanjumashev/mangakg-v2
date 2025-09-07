@@ -3,56 +3,14 @@ import { MangaCarousel } from "@/components/MangaCarousel";
 import { MangaCard } from "@/components/MangaCard";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { LoadingState } from "@/components/ui/loading-spinner";
+import { ErrorPage, CookingPage } from "@/components/ui/error-page";
 import { BookOpen } from "lucide-react";
+import { useFeaturedSeries, useRecentUpdates } from "@/hooks/useApi";
 import attackOnTitanCover from "@/assets/manga-covers/attack-on-titan.jpg";
 import onePieceCover from "@/assets/manga-covers/one-piece.jpg";
 
-// Mock data - in real app this would come from Django backend
-const featuredMangas = [
-  {
-    id: "1",
-    title: "Attack on Titan",
-    rating: 9.6,
-    coverImage: attackOnTitanCover,
-    latestChapter: 139
-  },
-  {
-    id: "2", 
-    title: "One Piece",
-    rating: 9.8,
-    coverImage: onePieceCover,
-    latestChapter: 1098
-  },
-  {
-    id: "3",
-    title: "Demon Slayer",
-    rating: 9.7,
-    coverImage: "/api/placeholder/300/400", 
-    latestChapter: 205
-  },
-  {
-    id: "4",
-    title: "My Hero Academia",
-    rating: 9.5,
-    coverImage: "/api/placeholder/300/400",
-    latestChapter: 403
-  },
-  {
-    id: "5",
-    title: "Tokyo Ghoul",
-    rating: 9.4,
-    coverImage: "/api/placeholder/300/400",
-    latestChapter: 179
-  },
-  {
-    id: "6",
-    title: "Naruto",
-    rating: 9.3,
-    coverImage: "/api/placeholder/300/400",
-    latestChapter: 700
-  }
-];
-
+// Mock continue reading data - this would eventually come from user's reading history
 const continueReading = [
   {
     id: "1",
@@ -84,6 +42,42 @@ const continueReading = [
 ];
 
 const HomePage = () => {
+  // Fetch data using API hooks
+  const { 
+    data: featuredData, 
+    isLoading: featuredLoading, 
+    error: featuredError,
+    refetch: refetchFeatured 
+  } = useFeaturedSeries();
+
+  const { 
+    data: recentData, 
+    isLoading: recentLoading, 
+    error: recentError,
+    refetch: refetchRecent 
+  } = useRecentUpdates();
+
+  // Handle server unavailable errors with cooking page
+  const isServerError = (error: unknown) => {
+    if (!error || typeof error !== 'object') return false;
+    const err = error as { status?: number; message?: string };
+    return (err.status && err.status >= 500) || err.message?.includes('Failed to connect');
+  };
+
+  // If both API calls fail with server errors, show cooking page
+  // Only show cooking page if both are actual server errors, not just any errors
+  if (featuredError && recentError && 
+      isServerError(featuredError) && isServerError(recentError)) {
+    return (
+      <div className="min-h-screen bg-manga-dark">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <CookingPage />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-manga-dark">
       <Header />
@@ -91,10 +85,16 @@ const HomePage = () => {
       <main className="container mx-auto px-4 py-8">
         {/* Featured Section */}
         <section className="mb-12">
-          <MangaCarousel title="Featured Manga" mangas={featuredMangas} />
+          <MangaCarousel 
+            title="Featured Manga" 
+            series={featuredData?.results || []}
+            isLoading={featuredLoading}
+            error={featuredError}
+            onRetry={refetchFeatured}
+          />
         </section>
 
-        {/* Continue Reading Section */}
+        {/* Continue Reading Section - keeping mock data for now */}
         <section className="mb-12">
           <div className="flex items-center mb-6">
             <BookOpen className="w-6 h-6 text-manga-primary mr-2" />
@@ -136,9 +136,15 @@ const HomePage = () => {
           </div>
         </section>
 
-        {/* Popular This Week */}
+        {/* Recent Updates */}
         <section>
-          <MangaCarousel title="Popular This Week" mangas={featuredMangas} />
+          <MangaCarousel 
+            title="Recent Updates" 
+            series={recentData?.results || []}
+            isLoading={recentLoading}
+            error={recentError}
+            onRetry={refetchRecent}
+          />
         </section>
       </main>
     </div>

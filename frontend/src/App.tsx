@@ -11,7 +11,28 @@ import ReaderPage from "./pages/ReaderPage";
 import AboutPage from "./pages/AboutPage";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      retry: (failureCount, error) => {
+        // Don't retry on 4xx errors, only network errors and 5xx
+        if (error instanceof Error && 'status' in error) {
+          const status = (error as { status: number }).status;
+          if (status >= 400 && status < 500) {
+            return false;
+          }
+        }
+        return failureCount < 3;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
 const App = () => {
   // Initialize theme on app start
@@ -38,7 +59,7 @@ const App = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/catalogue" element={<CataloguePage />} />
             <Route path="/manga/:id" element={<MangaDetailsPage />} />
-            <Route path="/read/:mangaId/:chapterNumber" element={<ReaderPage />} />
+            <Route path="/read/:chapterId" element={<ReaderPage />} />
             <Route path="/about" element={<AboutPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

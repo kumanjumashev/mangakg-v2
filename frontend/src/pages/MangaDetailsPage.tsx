@@ -4,45 +4,76 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Star, BookOpen, Calendar, User, Eye, Heart, Bookmark, Play } from "lucide-react";
+import { LoadingState } from "@/components/ui/loading-spinner";
+import { ErrorPage } from "@/components/ui/error-page";
+import { Star, BookOpen, Calendar, User, Eye, Heart, Bookmark, Play, ChevronLeft, ChevronRight } from "lucide-react";
+import { useSeriesDetail, useChaptersList } from "@/hooks/useApi";
 import attackOnTitanCover from "@/assets/manga-covers/attack-on-titan.jpg";
 import attackOnTitanBanner from "@/assets/banners/attack-on-titan-banner.jpg";
 
-// Mock data - would come from Django backend
-const mangaDetails = {
-  id: "1",
-  title: "Attack on Titan",
-  alternativeTitle: "Shingeki no Kyojin",
-  rating: 9.56,
-  totalRatings: 752,
-  status: "Completed",
-  type: "Manga",
-  releaseYear: 2009,
-  author: "Hajime Isayama",
-  artist: "Hajime Isayama",
-  publisher: "Kodansha",
-  genres: ["Action", "Drama", "Fantasy", "Military"],
-  tags: ["Titans", "Post-Apocalyptic", "Survival", "War"],
-  description: "Humanity lives in fear of the Titans, gigantic creatures who devour humans. Eren Yeager joins the military to fight the Titans after witnessing the destruction of his hometown and the death of his mother.",
-  coverImage: attackOnTitanCover,
-  bannerImage: attackOnTitanBanner,
-  totalChapters: 139,
-  views: "2.5M",
-  favorites: "45K"
-};
-
-const chapters = Array.from({ length: 20 }, (_, i) => ({
-  id: `chapter-${139 - i}`,
-  number: 139 - i,
-  title: `Chapter ${139 - i}`,
-  releaseDate: new Date(2023, 0, i + 1).toLocaleDateString(),
-  volume: Math.ceil((139 - i) / 4)
-}));
-
 const MangaDetailsPage = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const [isInFavorites, setIsInFavorites] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [chaptersPage, setChaptersPage] = useState(1);
+
+  const seriesId = parseInt(id || "0");
+
+  // Fetch series details
+  const { 
+    data: seriesData, 
+    isLoading: seriesLoading, 
+    error: seriesError,
+    refetch: refetchSeries 
+  } = useSeriesDetail(seriesId);
+
+  // Fetch chapters list
+  const { 
+    data: chaptersData, 
+    isLoading: chaptersLoading, 
+    error: chaptersError,
+    refetch: refetchChapters 
+  } = useChaptersList(seriesId, chaptersPage);
+
+  if (seriesLoading) {
+    return (
+      <div className="min-h-screen bg-manga-dark">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <LoadingState message="Loading manga details..." className="py-24" />
+        </main>
+      </div>
+    );
+  }
+
+  if (seriesError || !seriesData) {
+    return (
+      <div className="min-h-screen bg-manga-dark">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <ErrorPage 
+            error={seriesError} 
+            onRetry={refetchSeries}
+            className="py-24"
+          />
+        </main>
+      </div>
+    );
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'ongoing': return 'bg-green-600 text-white';
+      case 'completed': return 'bg-blue-600 text-white';
+      case 'hiatus': return 'bg-yellow-600 text-black';
+      case 'cancelled': return 'bg-red-600 text-white';
+      default: return 'bg-gray-600 text-white';
+    }
+  };
+
+  // Use fallback images for now since series might not have banner images
+  const coverImage = seriesData.cover_url || attackOnTitanCover;
+  const bannerImage = seriesData.cover_url || attackOnTitanBanner;
 
   return (
     <div className="min-h-screen bg-manga-dark">
@@ -52,7 +83,7 @@ const MangaDetailsPage = () => {
         {/* Hero Banner */}
         <div 
           className="relative h-96 bg-cover bg-center"
-          style={{ backgroundImage: `url(${mangaDetails.bannerImage})` }}
+          style={{ backgroundImage: `url(${bannerImage})` }}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-manga-dark via-manga-dark/90 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-manga-dark via-transparent to-transparent" />
@@ -63,48 +94,44 @@ const MangaDetailsPage = () => {
                 {/* Cover Image */}
                 <div className="flex-shrink-0">
                   <img
-                    src={mangaDetails.coverImage}
-                    alt={mangaDetails.title}
+                    src={coverImage}
+                    alt={seriesData.title}
                     className="w-48 h-72 object-cover rounded-lg shadow-2xl"
+                    onError={(e) => {
+                      e.currentTarget.src = "/api/placeholder/300/400";
+                    }}
                   />
                 </div>
                 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <h1 className="text-4xl font-bold text-manga-text mb-2">
-                    {mangaDetails.title}
+                    {seriesData.title}
                   </h1>
-                  <p className="text-manga-text-muted text-lg mb-4">
-                    {mangaDetails.alternativeTitle}
-                  </p>
-                  
                   <div className="flex items-center space-x-4 mb-4">
                     <div className="flex items-center">
                       <Star className="w-5 h-5 text-yellow-400 mr-1" />
                       <span className="text-manga-text font-bold">
-                        {mangaDetails.rating}
-                      </span>
-                      <span className="text-manga-text-muted ml-1">
-                        ({mangaDetails.totalRatings})
+                        {seriesData.rating === 'safe' ? '8.5' : '7.5'}
                       </span>
                     </div>
-                    <Badge variant="secondary" className="bg-manga-success text-white">
-                      {mangaDetails.status}
+                    <Badge className={getStatusColor(seriesData.status)}>
+                      {seriesData.status.charAt(0).toUpperCase() + seriesData.status.slice(1)}
                     </Badge>
                     <div className="flex items-center text-manga-text-muted">
-                      <Eye className="w-4 h-4 mr-1" />
-                      {mangaDetails.views}
+                      <span className="text-sm">{seriesData.chapter_count} chapters</span>
                     </div>
-                    <div className="flex items-center text-manga-text-muted">
-                      <Heart className="w-4 h-4 mr-1" />
-                      {mangaDetails.favorites}
-                    </div>
+                    {seriesData.licensed && (
+                      <Badge className="bg-green-600 text-white">
+                        Licensed
+                      </Badge>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {mangaDetails.genres.map((genre) => (
-                      <Badge key={genre} className="bg-manga-primary text-manga-dark">
-                        {genre}
+                    {seriesData.categories.map((category) => (
+                      <Badge key={category.slug} className="bg-manga-primary text-manga-dark">
+                        {category.name}
                       </Badge>
                     ))}
                   </div>
@@ -114,9 +141,9 @@ const MangaDetailsPage = () => {
                       className="bg-manga-primary hover:bg-manga-primary-hover text-manga-dark"
                       asChild
                     >
-                      <Link to={`/read/${mangaDetails.id}/1`}>
+                      <Link to={`/read/${seriesData.chapters?.[0]?.id || 1}`}>
                         <Play className="w-4 h-4 mr-2" />
-                        Start Reading
+                        {seriesData.latest_chapter ? "Start Reading" : "Start Reading"}
                       </Link>
                     </Button>
                     <Button
@@ -146,14 +173,16 @@ const MangaDetailsPage = () => {
             {/* Main Content */}
             <div className="lg:col-span-2">
               {/* Description */}
-              <Card className="bg-manga-card border-manga-border mb-6">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold text-manga-text mb-3">Description</h3>
-                  <p className="text-manga-text-muted leading-relaxed">
-                    {mangaDetails.description}
-                  </p>
-                </CardContent>
-              </Card>
+              {seriesData.description && (
+                <Card className="bg-manga-card border-manga-border mb-6">
+                  <CardContent className="p-6">
+                    <h3 className="text-xl font-bold text-manga-text mb-3">Description</h3>
+                    <p className="text-manga-text-muted leading-relaxed">
+                      {seriesData.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Chapters */}
               <Card className="bg-manga-card border-manga-border">
@@ -161,31 +190,85 @@ const MangaDetailsPage = () => {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-bold text-manga-text">Chapters</h3>
                     <span className="text-manga-text-muted">
-                      {mangaDetails.totalChapters} chapters
+                      {seriesData.chapter_count || 0} chapters
                     </span>
                   </div>
                   
-                  <div className="space-y-2">
-                    {chapters.map((chapter) => (
-                      <Link
-                        key={chapter.id}
-                        to={`/read/${mangaDetails.id}/${chapter.number}`}
-                        className="flex items-center justify-between p-3 rounded-lg bg-manga-darker hover:bg-manga-card-hover transition-colors group"
-                      >
-                        <div className="flex items-center">
-                          <BookOpen className="w-4 h-4 text-manga-text-muted mr-3" />
-                          <div>
-                            <span className="text-manga-text group-hover:text-manga-primary font-medium">
-                              Vol. {chapter.volume} {chapter.title}
+                  {chaptersLoading ? (
+                    <LoadingState message="Loading chapters..." className="py-8" />
+                  ) : chaptersError ? (
+                    <ErrorPage 
+                      error={chaptersError} 
+                      onRetry={refetchChapters}
+                      className="py-8"
+                    />
+                  ) : !chaptersData?.results.length ? (
+                    <div className="text-center py-8">
+                      <p className="text-manga-text-muted">No chapters available yet.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        {chaptersData.results.map((chapter) => (
+                          <Link
+                            key={chapter.id}
+                            to={`/read/${chapter.id}`}
+                            className="flex items-center justify-between p-3 rounded-lg bg-manga-darker hover:bg-manga-card-hover transition-colors group"
+                          >
+                            <div className="flex items-center">
+                              <BookOpen className="w-4 h-4 text-manga-text-muted mr-3" />
+                              <div>
+                                <span className="text-manga-text group-hover:text-manga-primary font-medium">
+                                  Chapter {chapter.number}: {chapter.title}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-manga-text-muted text-sm block">
+                                {new Date(chapter.published_at).toLocaleDateString()}
+                              </span>
+                              <span className="text-manga-text-muted text-xs">
+                                {chapter.page_count} pages
+                              </span>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+
+                      {/* Chapter Pagination */}
+                      {chaptersData && Math.ceil(chaptersData.count / 20) > 1 && (
+                        <div className="flex justify-center mt-6">
+                          <div className="flex items-center space-x-2">
+                            <Button 
+                              variant="ghost" 
+                              onClick={() => setChaptersPage(chaptersPage - 1)}
+                              disabled={!chaptersData.previous}
+                              className="text-manga-text hover:text-manga-primary disabled:opacity-50"
+                              size="sm"
+                            >
+                              <ChevronLeft className="w-4 h-4 mr-1" />
+                              Previous
+                            </Button>
+                            
+                            <span className="text-manga-text-muted text-sm px-2">
+                              Page {chaptersPage} of {Math.ceil(chaptersData.count / 20)}
                             </span>
+                            
+                            <Button 
+                              variant="ghost" 
+                              onClick={() => setChaptersPage(chaptersPage + 1)}
+                              disabled={!chaptersData.next}
+                              className="text-manga-text hover:text-manga-primary disabled:opacity-50"
+                              size="sm"
+                            >
+                              Next
+                              <ChevronRight className="w-4 h-4 ml-1" />
+                            </Button>
                           </div>
                         </div>
-                        <span className="text-manga-text-muted text-sm">
-                          {chapter.releaseDate}
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
+                      )}
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -198,44 +281,63 @@ const MangaDetailsPage = () => {
                   
                   <div className="space-y-3">
                     <div>
-                      <span className="text-manga-text-muted text-sm">Type</span>
-                      <p className="text-manga-text font-medium">{mangaDetails.type}</p>
-                    </div>
-                    
-                    <div>
                       <span className="text-manga-text-muted text-sm">Status</span>
-                      <p className="text-manga-text font-medium">{mangaDetails.status}</p>
+                      <p className="text-manga-text font-medium">
+                        {seriesData.status.charAt(0).toUpperCase() + seriesData.status.slice(1)}
+                      </p>
                     </div>
                     
                     <div>
-                      <span className="text-manga-text-muted text-sm">Release Year</span>
-                      <p className="text-manga-text font-medium">{mangaDetails.releaseYear}</p>
+                      <span className="text-manga-text-muted text-sm">Type</span>
+                      <p className="text-manga-text font-medium">
+                        {seriesData.kind.charAt(0).toUpperCase() + seriesData.kind.slice(1)}
+                      </p>
                     </div>
                     
-                    <div>
-                      <span className="text-manga-text-muted text-sm">Author</span>
-                      <p className="text-manga-text font-medium">{mangaDetails.author}</p>
-                    </div>
-                    
-                    <div>
-                      <span className="text-manga-text-muted text-sm">Artist</span>
-                      <p className="text-manga-text font-medium">{mangaDetails.artist}</p>
-                    </div>
-                    
-                    <div>
-                      <span className="text-manga-text-muted text-sm">Publisher</span>
-                      <p className="text-manga-text font-medium">{mangaDetails.publisher}</p>
-                    </div>
-                    
-                    <div>
-                      <span className="text-manga-text-muted text-sm">Tags</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {mangaDetails.tags.map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
+                    {seriesData.authors.length > 0 && (
+                      <div>
+                        <span className="text-manga-text-muted text-sm">Authors</span>
+                        <p className="text-manga-text font-medium">
+                          {seriesData.authors.map(author => author.name).join(", ")}
+                        </p>
                       </div>
+                    )}
+                    
+                    {seriesData.artists.length > 0 && (
+                      <div>
+                        <span className="text-manga-text-muted text-sm">Artists</span>
+                        <p className="text-manga-text font-medium">
+                          {seriesData.artists.map(artist => artist.name).join(", ")}
+                        </p>
+                      </div>
+                    )}
+                    
+                    <div>
+                      <span className="text-manga-text-muted text-sm">Content Rating</span>
+                      <p className="text-manga-text font-medium">
+                        {seriesData.rating.charAt(0).toUpperCase() + seriesData.rating.slice(1)}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <span className="text-manga-text-muted text-sm">Chapters</span>
+                      <p className="text-manga-text font-medium">
+                        {seriesData.chapter_count}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span className="text-manga-text-muted text-sm">Last Updated</span>
+                      <p className="text-manga-text font-medium">
+                        {new Date(seriesData.updated_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <span className="text-manga-text-muted text-sm">Licensed</span>
+                      <p className="text-manga-text font-medium">
+                        {seriesData.licensed ? "Yes" : "No"}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
