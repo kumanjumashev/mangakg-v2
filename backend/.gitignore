@@ -1,0 +1,83 @@
+# OS stuff
+.directory
+desktop.ini
+Thumbs.db
+.DS_Store
+
+# Python/Django stuff
+**/migrations/*auto*
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+logs/
+db.sqlite3
+*.pyc
+
+# Environment stuff
+.venv/
+env/
+venv/
+.python-version
+.env
+
+# Setuptools stuff
+build/
+dist/
+.eggs/
+PKG-INFO
+*.egg-info
+*.egg-link
+*.whl
+
+# Sphinx stuff
+_build/
+_templates/
+
+# Coverage stuff
+htmlcov/
+coverage.xml
+.coverage
+
+# Editor stuff
+.idea/
+.settings/
+.classpath
+.project
+*.pydevproject
+*.cache
+*.sublime-workspace
+*.sublime-project
+.*vimrc
+*.swp
+*~
+
+# Server stuff
+.well-known/
+.htaccess
+*.log
+*.ini
+*.pid
+*.sock
+*.gz
+*.br
+status_auth.txt
+!docker/uwsgi.ini
+
+# Redis stuff
+*.rdb
+*.aof
+
+# MangAdventure stuff
+media/
+static/admin/
+static/COMPILED/
+static/debug_toolbar/
+static/rest_framework/
+static/styles/_variables.scss
+static/styles/extra.scss
+
+# GitHub Stuff
+docs/changes.md
+*.sarif
+
+.cursor/rules/
