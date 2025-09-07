@@ -6,8 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { LoadingState } from "@/components/ui/loading-spinner";
 import { ErrorPage } from "@/components/ui/error-page";
-import { useChapterPages, useSeriesList } from "@/hooks/useApi";
+import { useChapterPages, useSeriesDetail, useSeriesList } from "@/hooks/useApi";
 import { useContinueReading } from "@/hooks/useContinueReading";
+import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
+import ChapterSelector from "@/components/ChapterSelector";
 
 const ReaderPage = () => {
   const { chapterId, page } = useParams<{ chapterId: string; page?: string }>();
@@ -22,17 +24,31 @@ const ReaderPage = () => {
   // Fetch chapter pages
   const { 
     data: chapterData, 
-    isLoading, 
-    error,
-    refetch 
+    isLoading: isChapterLoading, 
+    error: chapterError,
+    refetch: refetchChapter 
   } = useChapterPages(parseInt(chapterId || "0"));
 
-  // Fetch series list to find series ID from slug
-  const { data: seriesListData } = useSeriesList({ page_size: 100 });
-  const series = seriesListData?.results.find(s => s.slug === chapterData?.series_slug);
-  const seriesId = series?.id;
+  // Fetch series list to find the series by slug
+  const { data: seriesListData, isLoading: isSeriesListLoading } = useSeriesList({ page_size: 100 });
+  
+  // Find the series that matches our chapter's series_slug
+  const currentSeries = seriesListData?.results.find(series => series.slug === chapterData?.series_slug);
+  
+  // Fetch series details to get all chapters
+  const { 
+    data: seriesData, 
+    isLoading: isSeriesLoading,
+    error: seriesError
+  } = useSeriesDetail(currentSeries?.id || 0);
+  
+  const isLoading = isChapterLoading || isSeriesListLoading || isSeriesLoading;
+  const error = chapterError || seriesError;
 
   const totalPages = chapterData?.pages.length || 0;
+  
+  // Get real chapters data from series
+  const allChapters = seriesData?.chapters || [];
   
   // Update current page when page parameter changes
   useEffect(() => {
@@ -62,51 +78,77 @@ const ReaderPage = () => {
     }
   }, [currentPage, chapterId, navigate]);
   
-  // Navigation helpers (these would need additional API calls to get chapter list)
-  const navigateToChapter = (chapterId: number) => {
-    navigate(`/read/${chapterId}`);
-  };
+  // Chapter navigation
+  const handleChapterSelect = useCallback((newChapterId: number) => {
+    navigate(`/read/${newChapterId}/1`);
+  }, [navigate]);
 
-  // Track reading progress when chapter data loads or page changes
-  useEffect(() => {
-    if (chapterData && series && seriesId) {
-      // Add/update progress in continue reading
-      addProgress({
-        mangaId: seriesId.toString(),
-        mangaTitle: chapterData.series_title,
-        mangaSlug: chapterData.series_slug,
-        coverImage: series.cover_url || "/api/placeholder/300/400",
-        currentChapter: chapterData.number,
-        currentChapterTitle: chapterData.title,
-        currentChapterId: chapterId || "",
-        currentPage: currentPage,
-        totalPagesInChapter: totalPages,
-        totalChapters: series.chapter_count || 1
-      });
-    }
-  }, [chapterData, series, seriesId, chapterId, currentPage, totalPages, addProgress]);
+  // Get chapter navigation info
+  const { chapterNav } = useKeyboardNavigation({
+    chapters: allChapters,
+    currentChapterId: parseInt(chapterId || "0"),
+    currentPage,
+    totalPages,
+    seriesSlug: chapterData?.series_slug || "",
+    onPageChange: (page) => {
+      setCurrentPage(page);
+      navigate(`/read/${chapterId}/${page}`, { replace: true });
+    },
+    onNextPage: nextPage,
+    onPrevPage: prevPage,
+    enabled: false, // We'll handle navigation separately
+  });
 
-  // Auto-scroll to top when changing pages in single/double mode
-  useEffect(() => {
-    if (viewMode !== "vertical") {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Chapter navigation functions
+  const goToPreviousChapter = useCallback(() => {
+    if (chapterNav.previousChapter) {
+      navigate(`/read/${chapterNav.previousChapter.id}/1`);
     }
-  }, [currentPage, viewMode]);
+  }, [chapterNav.previousChapter, navigate]);
 
-  // Preload next few images for better performance
-  useEffect(() => {
-    if (chapterData?.pages && viewMode === "single") {
-      const preloadCount = 3;
-      for (let i = currentPage; i < Math.min(currentPage + preloadCount, chapterData.pages.length); i++) {
-        const img = new Image();
-        img.src = chapterData.pages[i].image_url;
-      }
+  const goToNextChapter = useCallback(() => {
+    if (chapterNav.nextChapter) {
+      navigate(`/read/${chapterNav.nextChapter.id}/1`);
+    } else if (currentSeries) {
+      // Redirect to details page using series ID
+      navigate(`/manga/${currentSeries.id}`);
     }
-  }, [currentPage, chapterData?.pages, viewMode]);
+  }, [chapterNav.nextChapter, navigate, currentSeries]);
+
+  // Enhanced next page function that handles chapter progression
+  const enhancedNextPage = useCallback(() => {
+    if (currentPage < totalPages) {
+      nextPage();
+    } else {
+      // At last page of chapter, automatically advance to next chapter
+      goToNextChapter();
+    }
+  }, [currentPage, totalPages, nextPage, goToNextChapter]);
 
   // Keyboard navigation
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
+      // Ignore if user is typing in an input field
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
+      // Handle chapter navigation with Ctrl+Left/Right
+      if (event.ctrlKey || event.metaKey) {
+        switch (event.key) {
+          case 'ArrowLeft':
+            event.preventDefault();
+            goToPreviousChapter();
+            break;
+          case 'ArrowRight':
+            event.preventDefault();
+            goToNextChapter();
+            break;
+        }
+        return;
+      }
+      
+      // Handle regular page navigation
       switch (event.key) {
         case 'ArrowLeft':
         case 'a':
@@ -117,8 +159,9 @@ const ReaderPage = () => {
         case 'ArrowRight':
         case 'd':
         case 'D':
+        case ' ': // Spacebar for next page
           event.preventDefault();
-          nextPage();
+          enhancedNextPage();
           break;
         case 'ArrowUp':
         case 'w':
@@ -141,7 +184,46 @@ const ReaderPage = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [nextPage, prevPage, viewMode]);
+  }, [goToPreviousChapter, goToNextChapter, prevPage, enhancedNextPage, viewMode]);
+
+  // Track reading progress when chapter data loads or page changes
+  useEffect(() => {
+    if (chapterData && currentSeries) {
+      // Add/update progress in continue reading with real data
+      addProgress({
+        mangaId: currentSeries.id.toString(),
+        mangaTitle: chapterData.series_title,
+        mangaSlug: chapterData.series_slug,
+        coverImage: currentSeries.cover_url || "/api/placeholder/300/400",
+        currentChapter: chapterData.number,
+        currentChapterTitle: chapterData.title,
+        currentChapterId: chapterId || "",
+        currentPage: currentPage,
+        totalPagesInChapter: totalPages,
+        totalChapters: currentSeries.chapter_count || allChapters.length
+      });
+    }
+  }, [chapterData, currentSeries, chapterId, currentPage, totalPages, allChapters.length, addProgress]);
+
+  // Auto-scroll to top when changing pages in single/double mode
+  useEffect(() => {
+    if (viewMode !== "vertical") {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentPage, viewMode]);
+
+  // Preload next few images for better performance
+  useEffect(() => {
+    if (chapterData?.pages && viewMode === "single") {
+      const preloadCount = 3;
+      for (let i = currentPage; i < Math.min(currentPage + preloadCount, chapterData.pages.length); i++) {
+        const img = new Image();
+        img.src = chapterData.pages[i].image_url;
+      }
+    }
+  }, [currentPage, chapterData?.pages, viewMode]);
+
+  // Note: Keyboard navigation is now handled by useKeyboardNavigation hook
 
   if (isLoading) {
     return (
@@ -156,7 +238,7 @@ const ReaderPage = () => {
       <div className="min-h-screen bg-manga-darker">
         <ErrorPage 
           error={error} 
-          onRetry={refetch}
+          onRetry={refetchChapter}
           className="py-24"
         />
       </div>
@@ -179,7 +261,7 @@ const ReaderPage = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-manga-card border-manga-border">
                 <DropdownMenuItem asChild>
-                  <Link to={`/manga/${seriesId || chapterData.series_slug}`} className="text-manga-text hover:text-manga-primary">
+                  <Link to={`/manga/${currentSeries?.id || chapterData.series_slug}`} className="text-manga-text hover:text-manga-primary">
                     Back to Details
                   </Link>
                 </DropdownMenuItem>
@@ -200,16 +282,37 @@ const ReaderPage = () => {
             </div>
           </div>
 
-          {/* Center - Chapter Info */}
-          <div className="flex items-center space-x-4">
-            <div className="text-center">
-              <p className="text-manga-text font-medium">
-                Chapter {chapterData.number}
-              </p>
-              <p className="text-manga-text-muted text-sm">
-                {totalPages} pages
-              </p>
-            </div>
+          {/* Center - Chapter Navigation */}
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={goToPreviousChapter}
+              disabled={!chapterNav.previousChapter}
+              className="text-manga-text hover:text-manga-primary disabled:opacity-50"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            
+            {allChapters.length > 0 && (
+              <ChapterSelector
+                chapters={allChapters}
+                currentChapterId={parseInt(chapterId || "0")}
+                onChapterSelect={handleChapterSelect}
+                readChapterIds={new Set()} // Will be implemented with reading progress
+                className="min-w-[250px]"
+              />
+            )}
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={goToNextChapter}
+              disabled={!chapterNav.nextChapter && !currentSeries}
+              className="text-manga-text hover:text-manga-primary disabled:opacity-50"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
           </div>
 
           {/* Right Side - Settings */}
@@ -274,11 +377,11 @@ const ReaderPage = () => {
                   src={chapterData.pages[currentPage - 1]?.image_url}
                   alt={`Page ${currentPage}`}
                   className="max-w-full h-auto shadow-2xl rounded-lg cursor-pointer"
-                  onClick={nextPage}
+                  onClick={enhancedNextPage}
                   style={{ 
                     maxHeight: '90vh',
                     width: 'auto',
-                    cursor: currentPage < totalPages ? "pointer" : "default" 
+                    cursor: "pointer"
                   }}
                   onError={(e) => {
                     e.currentTarget.src = "/api/placeholder/800/1200";
@@ -305,7 +408,7 @@ const ReaderPage = () => {
                   alt={`Page ${currentPage}`}
                   className="max-w-md h-auto shadow-2xl rounded-lg cursor-pointer"
                   style={{ maxHeight: '90vh' }}
-                  onClick={nextPage}
+                  onClick={enhancedNextPage}
                   onError={(e) => {
                     e.currentTarget.src = "/api/placeholder/800/1200";
                   }}
@@ -383,7 +486,7 @@ const ReaderPage = () => {
         {/* Chapter Navigation Placeholder */}
         <div className="flex justify-center space-x-4 mt-8">
           <Button
-            onClick={() => navigate(`/manga/${seriesId || chapterData.series_slug}`)}
+            onClick={() => navigate(`/manga/${currentSeries?.id || chapterData.series_slug}`)}
             className="bg-manga-primary hover:bg-manga-primary-hover text-manga-dark"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -394,6 +497,7 @@ const ReaderPage = () => {
         {/* Keyboard shortcuts info */}
         <div className="text-center mt-8 text-manga-text-muted text-sm">
           <p>Use arrow keys, WASD, or click to navigate pages</p>
+          <p>Use Ctrl + arrow keys to navigate between chapters</p>
         </div>
       </main>
     </div>
