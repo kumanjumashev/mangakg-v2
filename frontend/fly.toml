@@ -1,0 +1,31 @@
+# fly.toml app configuration file for MangaKG Frontend
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+
+app = "mangakg-frontend"
+primary_region = "sjc"
+
+[build]
+  [build.args]
+    VITE_API_BASE_URL = "https://mangakg-backend.fly.dev/api"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[http_service.checks]]
+  method = "get"
+  path = "/health"
+  protocol = "http"
+  timeout = "10s"
+  grace_period = "5s"
+  interval = "30s"
+
+[env]
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256

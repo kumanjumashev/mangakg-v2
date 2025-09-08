@@ -1,0 +1,49 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - DATABASE_URL=sqlite:///db.sqlite3
+    volumes:
+      - ./backend:/app
+      - backend_static:/app/staticfiles
+    depends_on:
+      - db
+    networks:
+      - mangakg
+
+  frontend:
+    build: 
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: http://localhost:8000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - mangakg
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: mangakg
+      POSTGRES_USER: mangakg
+      POSTGRES_PASSWORD: dev-password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - mangakg
+
+volumes:
+  postgres_data:
+  backend_static:
+
+networks:
+  mangakg:
+    driver: bridge

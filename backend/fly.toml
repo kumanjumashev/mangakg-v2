@@ -1,4 +1,4 @@
-# fly.toml app configuration file
+# fly.toml app configuration file for MangaKG Backend
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 
 app = "mangakg-backend"
@@ -25,13 +25,19 @@ primary_region = "sjc"
 [env]
   DEBUG = "False"
   DJANGO_SETTINGS_MODULE = "mangakg.settings"
+  ALLOWED_HOSTS = "manga.kg,.fly.dev"
+  CORS_ALLOWED_ORIGINS = "https://manga.kg,https://mangakg-frontend.fly.dev"
 
 [[statics]]
   guest_path = "/app/staticfiles"
   url_prefix = "/static/"
 
+[[statics]]
+  guest_path = "/app/media"
+  url_prefix = "/media/"
+
 [processes]
-  app = "gunicorn --bind 0.0.0.0:8000 mangakg.wsgi:application"
+  app = "gunicorn --bind 0.0.0.0:8000 --workers 2 --timeout 120 mangakg.wsgi:application"
 
 [deploy]
   release_command = "python manage.py migrate --noinput && python manage.py collectstatic --noinput"
@@ -39,4 +45,4 @@ primary_region = "sjc"
 [[vm]]
   cpu_kind = "shared"
   cpus = 1
-  memory_mb = 256
+  memory_mb = 512
