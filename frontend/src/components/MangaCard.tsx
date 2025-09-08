@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Star } from "lucide-react";
+// TODO: Re-enable for v2 - import { Star } from "lucide-react";
 import { Series } from "@/lib/types";
 
 interface MangaCardProps {
@@ -57,9 +57,10 @@ export const MangaCard = ({
               e.currentTarget.src = "/api/placeholder/300/400";
             }}
           />
-          <div className="absolute top-2 left-2 bg-manga-success text-white px-2 py-1 rounded text-xs font-bold">
+          {/* TODO: Implement rating system for v2 */}
+          {/* <div className="absolute top-2 left-2 bg-manga-success text-white px-2 py-1 rounded text-xs font-bold">
             {displayRating.toFixed(1)}
-          </div>
+          </div> */}
           {displayLatestChapter && (
             <div className="absolute bottom-2 right-2 bg-manga-primary text-manga-dark px-2 py-1 rounded text-xs font-bold">
               Ch. {displayLatestChapter}

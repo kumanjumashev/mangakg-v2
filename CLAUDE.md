@@ -43,6 +43,34 @@ npm run lint         # Run ESLint
 npm run preview      # Preview production build
 ```
 
+### Frontend Testing Protocol with Playwright MCP
+After making any frontend changes, always conduct comprehensive testing using Playwright MCP:
+
+#### Visual Testing
+- Navigate to `http://localhost:8080` (ensure dev server is running)
+- Take screenshots of directly affected pages and their dependencies only
+- Test responsive design at specific viewport sizes: 375px (mobile), 768px (tablet), 1440px (desktop)
+- Verify theme switching (dark/light mode) functionality and visual consistency
+- Check component rendering and layout integrity
+- Save all screenshots to `tmp_files/screenshots/` directory for comparison
+
+#### Functional Testing
+- Test all modified features and user interactions on affected pages and dependencies
+- Check browser console for any JavaScript errors during testing
+- Monitor network requests to verify API calls are functioning correctly
+- Verify that existing features on tested pages weren't broken by changes
+
+#### Testing Workflow
+1. Start dev server: `cd frontend && npm run dev`
+2. Open browser with Playwright MCP to `http://localhost:8080`
+3. Resize browser to test at 375px, 768px, and 1440px viewports
+4. Navigate through directly affected pages and their dependencies
+5. Take screenshots and save to `tmp_files/screenshots/` directory
+6. Interact with all modified features to ensure functionality
+7. Monitor browser console for errors and network tab for API calls throughout testing
+8. Test theme switching on affected pages
+9. Document any console errors, network issues, or functional problems found
+
 ### Backend Development
 ```bash
 cd backend
@@ -177,3 +205,4 @@ Priority is now on frontend API integration using the completed backend. Key tas
 - Frontend API integration requirements in `/tasks/prd-frontend-api-integration.md`
 - You are in YOLO mode, so after completing a task and its sub-tasks, move on to the next one without asking human intervention
 - The project is simple, do not install OS packages. Just use Python/Typescript libs
+- **MANDATORY**: After any frontend changes, use Playwright MCP to conduct both visual and functional testing of all affected pages and features before considering the task complete

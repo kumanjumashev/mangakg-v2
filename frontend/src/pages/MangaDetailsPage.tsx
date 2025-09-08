@@ -6,15 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/loading-spinner";
 import { ErrorPage } from "@/components/ui/error-page";
-import { Star, BookOpen, Calendar, User, Eye, Heart, Bookmark, Play, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, Calendar, User, Eye, Play, ChevronLeft, ChevronRight } from "lucide-react";
+// TODO: Re-enable for v2 - import { Star, Heart, Bookmark } from "lucide-react";
 import { useSeriesDetail, useChaptersList } from "@/hooks/useApi";
 import attackOnTitanCover from "@/assets/manga-covers/attack-on-titan.jpg";
 import attackOnTitanBanner from "@/assets/banners/attack-on-titan-banner.jpg";
 
 const MangaDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
-  const [isInFavorites, setIsInFavorites] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  // TODO: Re-enable for v2
+  // const [isInFavorites, setIsInFavorites] = useState(false);
+  // const [isBookmarked, setIsBookmarked] = useState(false);
   const [chaptersPage, setChaptersPage] = useState(1);
 
   const seriesId = parseInt(id || "0");
@@ -109,12 +111,13 @@ const MangaDetailsPage = () => {
                     {seriesData.title}
                   </h1>
                   <div className="flex items-center space-x-4 mb-4">
-                    <div className="flex items-center">
+                    {/* TODO: Implement rating system for v2 */}
+                    {/* <div className="flex items-center">
                       <Star className="w-5 h-5 text-yellow-400 mr-1" />
                       <span className="text-manga-text font-bold">
                         {seriesData.rating === 'safe' ? '8.5' : '7.5'}
                       </span>
-                    </div>
+                    </div> */}
                     <Badge className={getStatusColor(seriesData.status)}>
                       {seriesData.status.charAt(0).toUpperCase() + seriesData.status.slice(1)}
                     </Badge>
@@ -146,7 +149,8 @@ const MangaDetailsPage = () => {
                         {seriesData.latest_chapter ? "Start Reading" : "Start Reading"}
                       </Link>
                     </Button>
-                    <Button
+                    {/* TODO: Implement favorites and bookmarks for v2 */}
+                    {/* <Button
                       variant="secondary"
                       onClick={() => setIsInFavorites(!isInFavorites)}
                       className={isInFavorites ? "bg-red-600 hover:bg-red-700" : ""}
@@ -160,7 +164,7 @@ const MangaDetailsPage = () => {
                     >
                       <Bookmark className={`w-4 h-4 mr-2 ${isBookmarked ? "fill-current" : ""}`} />
                       {isBookmarked ? "Bookmarked" : "Bookmark"}
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               </div>
