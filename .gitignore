@@ -166,3 +166,9 @@ cython_debug/
 #.idea/
 
 .turbo/
+
+# Claude Code stuff
+tasks/
+rules/
+tmp_files/
+CLAUDE.md
