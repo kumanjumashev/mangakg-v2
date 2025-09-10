@@ -28,7 +28,14 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-wvk19cc%#-jc&7c5o@by*$icg#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
+# ALLOWED_HOSTS configuration
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver,192.168.0.103,manga.kg,mangakg-backend.fly.dev').split(',')
+
+# Allow Fly.io internal network for health checks
+if os.getenv('FLY_INTERNAL'):
+    # For now, allow all hosts when running on Fly.io internal network
+    # This is needed for health checks from internal IPs
+    ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -46,6 +53,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'reader.middleware.HealthCheckMiddleware',  # Handle health checks first
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -99,10 +107,12 @@ if os.getenv('DATABASE_URL'):
     }
 else:
     # Development SQLite configuration
+    # Use persistent storage on Fly.io if available, otherwise local development
+    db_path = '/data/db.sqlite3' if os.path.exists('/data') else BASE_DIR / 'db.sqlite3'
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': db_path,
         }
     }
 
@@ -237,10 +247,14 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_SECONDS = 31536000
     SECURE_REDIRECT_EXEMPT = []
-    SECURE_SSL_REDIRECT = True
+    # Fly.io handles HTTPS termination, so don't force SSL redirect in Django
+    SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     X_FRAME_OPTIONS = 'DENY'
+    
+    # Trust Fly.io proxy headers
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Logging configuration
 LOGGING = {

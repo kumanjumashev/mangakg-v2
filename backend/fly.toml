@@ -1,48 +1,54 @@
-# fly.toml app configuration file for MangaKG Backend
+# fly.toml app configuration file generated for mangakg-backend on 2025-09-08T22:39:52+06:00
+#
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-app = "mangakg-backend"
-primary_region = "sjc"
+app = 'mangakg-backend'
+primary_region = 'waw'
+console_command = '/code/manage.py shell'
 
 [build]
+
+[deploy]
+  release_command = 'python manage.py migrate --noinput'
+
+[env]
+  ALLOWED_HOSTS = 'manga.kg,mangakg-backend.fly.dev,.fly.dev'
+  FLY_INTERNAL = 'True'
+  CORS_ALLOWED_ORIGINS = 'https://manga.kg,https://mangakg-frontend.fly.dev'
+  DEBUG = 'False'
+  DJANGO_SETTINGS_MODULE = 'mangakg.settings'
+  PORT = '8000'
+  DJANGO_LOG_LEVEL = 'DEBUG'
+
+[processes]
+  app = 'gunicorn --bind 0.0.0.0:8000 --workers 2 --timeout 120 --log-level debug --access-logfile - --error-logfile - mangakg.wsgi:application'
 
 [http_service]
   internal_port = 8000
   force_https = true
-  auto_stop_machines = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
-  processes = ["app"]
+  processes = ['app']
 
-[[http_service.checks]]
-  method = "get"
-  path = "/api/health/"
-  protocol = "http"
-  timeout = "10s"
-  grace_period = "5s"
-  interval = "30s"
-
-[env]
-  DEBUG = "False"
-  DJANGO_SETTINGS_MODULE = "mangakg.settings"
-  ALLOWED_HOSTS = "manga.kg,.fly.dev"
-  CORS_ALLOWED_ORIGINS = "https://manga.kg,https://mangakg-frontend.fly.dev"
-
-[[statics]]
-  guest_path = "/app/staticfiles"
-  url_prefix = "/static/"
-
-[[statics]]
-  guest_path = "/app/media"
-  url_prefix = "/media/"
-
-[processes]
-  app = "gunicorn --bind 0.0.0.0:8000 --workers 2 --timeout 120 mangakg.wsgi:application"
-
-[deploy]
-  release_command = "python manage.py migrate --noinput && python manage.py collectstatic --noinput"
+  [[http_service.checks]]
+    interval = '30s'
+    timeout = '10s'
+    grace_period = '5s'
+    method = 'get'
+    path = '/api/health'
+    protocol = 'http'
 
 [[vm]]
-  cpu_kind = "shared"
+  memory = '512mb'
+  cpu_kind = 'shared'
   cpus = 1
-  memory_mb = 512
+
+[mounts]
+  source = 'mangakg_data'
+  destination = '/data'
+
+[[statics]]
+  guest_path = '/code/static'
+  url_prefix = '/static/'

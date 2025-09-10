@@ -1,52 +1,41 @@
-# Use Python 3.11 slim image as base
-FROM python:3.11-slim
+ARG PYTHON_VERSION=3.11-slim
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+FROM python:${PYTHON_VERSION}
 
-# Set work directory
-WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-# Install system dependencies
+# install psycopg2 dependencies.
 RUN apt-get update && apt-get install -y \
-    build-essential \
     libpq-dev \
-    curl \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
+RUN mkdir -p /code
+
+WORKDIR /code
+
 RUN pip install poetry
+COPY pyproject.toml poetry.lock /code/
+RUN poetry config virtualenvs.create false
+RUN poetry install --only main --no-root --no-interaction
+COPY . /code
 
-# Configure Poetry
-ENV POETRY_NO_INTERACTION=1 \
-    POETRY_VENV_CREATE=false
-
-# Copy poetry files
-COPY pyproject.toml poetry.lock ./
-
-# Install dependencies directly to system Python
-RUN poetry config virtualenvs.create false && poetry install --only=main --no-root
-
-# Copy project files
-COPY . .
-
-# Create a non-root user
-RUN adduser --disabled-password --gecos '' appuser && \
-    chown -R appuser:appuser /app
-USER appuser
-
-# Collect static files
+ENV SECRET_KEY "fzwiQehcKajU23ifGieH1EQ51THdUdczEDRh0CIl7i2SZJFASs"
 RUN python manage.py collectstatic --noinput
 
-# Expose port
+# Create entrypoint script to handle permissions
+RUN echo '#!/bin/bash\n\
+# Ensure /data directory exists and has proper permissions\n\
+if [ -d "/data" ]; then\n\
+    chown -R root:root /data\n\
+    chmod -R 755 /data\n\
+fi\n\
+\n\
+# Run the command\n\
+exec "$@"' > /entrypoint.sh && chmod +x /entrypoint.sh
+
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/api/health/ || exit 1
-
-# Run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120", "mangakg.wsgi:application"]
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["gunicorn","--bind",":8000","--workers","2","mangakg.wsgi"]

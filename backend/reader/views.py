@@ -23,7 +23,21 @@ from .serializers import (
 @api_view(['GET'])
 def health_check(request):
     """Health check endpoint for deployment monitoring."""
-    return Response({'status': 'healthy', 'service': 'mangakg-backend'})
+    try:
+        # Basic health check without database dependency
+        from django.conf import settings
+        return Response({
+            'status': 'healthy', 
+            'service': 'mangakg-backend',
+            'debug': settings.DEBUG,
+            'allowed_hosts': len(settings.ALLOWED_HOSTS)
+        })
+    except Exception as e:
+        return Response({
+            'status': 'unhealthy', 
+            'service': 'mangakg-backend',
+            'error': str(e)
+        }, status=500)
 
 
 class SeriesViewSet(viewsets.ReadOnlyModelViewSet):

@@ -21,8 +21,9 @@ urlpatterns = [
     # API endpoints
     path('api/', include(router.urls)),
     
-    # Health check endpoint
+    # Health check endpoint (with and without trailing slash)
     path('api/health/', views.health_check, name='health'),
+    path('api/health', views.health_check, name='health-no-slash'),
     
     # Custom API endpoints
     path('api/series/<slug:slug>/chapters/', views.SeriesChaptersView.as_view(), name='series-chapters'),
