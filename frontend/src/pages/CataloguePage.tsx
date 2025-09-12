@@ -129,8 +129,8 @@ const CataloguePage = () => {
       
       <main className="container mx-auto px-4 py-8">
         <div className="flex gap-8">
-          {/* Filters Sidebar */}
-          <aside className="w-80 flex-shrink-0">
+          {/* Filters Sidebar - Hidden on mobile */}
+          <aside className="hidden lg:block w-80 flex-shrink-0">
             <Card className="bg-manga-card border-manga-border">
               <CardHeader>
                 <CardTitle className="text-manga-text flex items-center justify-between">
@@ -236,7 +236,7 @@ const CataloguePage = () => {
           </aside>
 
           {/* Main Content */}
-          <div className="flex-1">
+          <div className="flex-1 lg:flex-1 w-full">
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-2xl font-bold text-manga-text">Catalogue</h1>
               <div className="flex items-center space-x-4">
@@ -248,7 +248,7 @@ const CataloguePage = () => {
                 <Button
                   variant="ghost" 
                   size="sm"
-                  className="md:hidden text-manga-text"
+                  className="lg:hidden text-manga-text hover:text-manga-primary border border-manga-border"
                   onClick={() => setFiltersOpen(!filtersOpen)}
                 >
                   <SlidersHorizontal className="w-4 h-4 mr-2" />
@@ -256,6 +256,129 @@ const CataloguePage = () => {
                 </Button>
               </div>
             </div>
+
+            {/* Mobile Filters Modal - Only shown when filtersOpen is true on mobile */}
+            {filtersOpen && (
+              <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setFiltersOpen(false)}>
+                <div className="fixed inset-x-0 bottom-0 bg-manga-card border-t border-manga-border rounded-t-xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold text-manga-text">Filters</h3>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setFiltersOpen(false)}
+                        className="text-manga-text hover:text-manga-primary"
+                      >
+                        ×
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-6">
+                      {/* Search */}
+                      <div>
+                        <label className="text-manga-text text-sm font-medium mb-2 block">
+                          Search by title
+                        </label>
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-manga-text-muted w-4 h-4" />
+                          <Input
+                            placeholder="Search manga..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10 bg-manga-darker border-manga-border text-manga-text"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Sort By */}
+                      <div>
+                        <label className="text-manga-text text-sm font-medium mb-2 block">
+                          Sort by
+                        </label>
+                        <Select value={sortBy} onValueChange={setSortBy}>
+                          <SelectTrigger className="bg-manga-darker border-manga-border text-manga-text">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-manga-card border-manga-border">
+                            <SelectItem value="popularity">Popularity</SelectItem>
+                            <SelectItem value="rating">Rating</SelectItem>
+                            <SelectItem value="latest">Latest Updates</SelectItem>
+                            <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Status */}
+                      <div>
+                        <label className="text-manga-text text-sm font-medium mb-2 block">
+                          Status
+                        </label>
+                        <Select value={status} onValueChange={(value) => setStatus(value as SeriesStatus | "all")}>
+                          <SelectTrigger className="bg-manga-darker border-manga-border text-manga-text">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-manga-card border-manga-border">
+                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="ongoing">Ongoing</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="hiatus">Hiatus</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Categories */}
+                      <div>
+                        <label className="text-manga-text text-sm font-medium mb-2 block">
+                          Categories
+                        </label>
+                        {categoriesLoading ? (
+                          <LoadingState message="Loading categories..." className="py-4" />
+                        ) : categoriesError ? (
+                          <p className="text-manga-danger text-sm">Failed to load categories</p>
+                        ) : (
+                          <div className="max-h-48 overflow-y-auto space-y-2">
+                            {categoriesData?.results.map((category) => (
+                              <div key={category.slug} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`mobile-category-${category.slug}`}
+                                  checked={selectedCategories.includes(category.slug)}
+                                  onCheckedChange={(checked) => handleCategoryChange(category.slug, !!checked)}
+                                />
+                                <label
+                                  htmlFor={`mobile-category-${category.slug}`}
+                                  className="text-manga-text text-sm cursor-pointer"
+                                >
+                                  {category.name}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 pt-4">
+                        <Button 
+                          variant="outline" 
+                          onClick={clearFilters}
+                          className="flex-1 border-manga-border text-manga-text hover:text-manga-primary"
+                        >
+                          Clear All
+                        </Button>
+                        <Button 
+                          onClick={() => setFiltersOpen(false)}
+                          className="flex-1 bg-manga-primary hover:bg-manga-primary-hover text-manga-dark"
+                        >
+                          Apply Filters
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Main Content Area */}
             {seriesLoading ? (

@@ -17,6 +17,7 @@ const ReaderPage = () => {
   const [currentPage, setCurrentPage] = useState(page ? parseInt(page) : 1);
   const [viewMode, setViewMode] = useState("single"); // single, double, vertical
   const [zoom, setZoom] = useState(100);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   // Continue reading functionality
   const { addProgress } = useContinueReading();
@@ -64,6 +65,8 @@ const ReaderPage = () => {
     if (currentPage < totalPages) {
       const newPage = currentPage + 1;
       setCurrentPage(newPage);
+      // Close settings dropdown when navigating
+      setIsSettingsOpen(false);
       // Update URL to reflect current page
       navigate(`/read/${chapterId}/${newPage}`, { replace: true });
     }
@@ -73,6 +76,8 @@ const ReaderPage = () => {
     if (currentPage > 1) {
       const newPage = currentPage - 1;
       setCurrentPage(newPage);
+      // Close settings dropdown when navigating
+      setIsSettingsOpen(false);
       // Update URL to reflect current page
       navigate(`/read/${chapterId}/${newPage}`, { replace: true });
     }
@@ -117,6 +122,8 @@ const ReaderPage = () => {
 
   // Enhanced next page function that handles chapter progression
   const enhancedNextPage = useCallback(() => {
+    // Close settings dropdown when navigating
+    setIsSettingsOpen(false);
     if (currentPage < totalPages) {
       nextPage();
     } else {
@@ -273,23 +280,23 @@ const ReaderPage = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            {/* Manga Title */}
-            <div>
-              <h1 className="text-manga-text font-bold text-lg">{chapterData.series_title}</h1>
-              <p className="text-manga-text-muted text-sm">
+            {/* Manga Title - Hidden on mobile to save space */}
+            <div className="min-w-0 flex-1 hidden md:block">
+              <h1 className="text-manga-text font-bold text-base sm:text-lg truncate">{chapterData.series_title}</h1>
+              <p className="text-manga-text-muted text-xs sm:text-sm truncate">
                 Chapter {chapterData.number}: {chapterData.title}
               </p>
             </div>
           </div>
 
           {/* Center - Chapter Navigation */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={goToPreviousChapter}
               disabled={!chapterNav.previousChapter}
-              className="text-manga-text hover:text-manga-primary disabled:opacity-50"
+              className="text-manga-text hover:text-manga-primary disabled:opacity-50 min-h-[44px] min-w-[44px] p-2"
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
@@ -300,7 +307,7 @@ const ReaderPage = () => {
                 currentChapterId={parseInt(chapterId || "0")}
                 onChapterSelect={handleChapterSelect}
                 readChapterIds={new Set()} // Will be implemented with reading progress
-                className="min-w-[250px]"
+                className="min-w-[80px] sm:min-w-[200px] max-w-[120px] sm:max-w-[250px]"
               />
             )}
             
@@ -309,7 +316,7 @@ const ReaderPage = () => {
               size="sm"
               onClick={goToNextChapter}
               disabled={!chapterNav.nextChapter && !currentSeries}
-              className="text-manga-text hover:text-manga-primary disabled:opacity-50"
+              className="text-manga-text hover:text-manga-primary disabled:opacity-50 min-h-[44px] min-w-[44px] p-2"
             >
               <ChevronRight className="w-4 h-4" />
             </Button>
@@ -317,36 +324,92 @@ const ReaderPage = () => {
 
           {/* Right Side - Settings */}
           <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setZoom(Math.max(50, zoom - 10))}
-              className="text-manga-text hover:text-manga-primary"
-            >
-              <ZoomOut className="w-4 h-4" />
-            </Button>
-            <span className="text-manga-text text-sm min-w-[3rem] text-center">
-              {zoom}%
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setZoom(Math.min(200, zoom + 10))}
-              className="text-manga-text hover:text-manga-primary"
-            >
-              <ZoomIn className="w-4 h-4" />
-            </Button>
-            
-            <Select value={viewMode} onValueChange={setViewMode}>
-              <SelectTrigger className="bg-manga-card border-manga-border text-manga-text w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-manga-card border-manga-border">
-                <SelectItem value="single">Single</SelectItem>
-                <SelectItem value="double">Double</SelectItem>
-                <SelectItem value="vertical">Vertical</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Desktop Settings - Hidden on mobile */}
+            <div className="hidden md:flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setZoom(Math.max(50, zoom - 10))}
+                className="text-manga-text hover:text-manga-primary"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </Button>
+              <span className="text-manga-text text-sm min-w-[3rem] text-center">
+                {zoom}%
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setZoom(Math.min(200, zoom + 10))}
+                className="text-manga-text hover:text-manga-primary"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </Button>
+              
+              <Select value={viewMode} onValueChange={setViewMode}>
+                <SelectTrigger className="bg-manga-card border-manga-border text-manga-text w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-manga-card border-manga-border">
+                  <SelectItem value="single">Single</SelectItem>
+                  <SelectItem value="double">Double</SelectItem>
+                  <SelectItem value="vertical">Vertical</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Mobile Settings Dropdown - Shown only on mobile */}
+            <div className="md:hidden">
+              <DropdownMenu open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="text-manga-text hover:text-manga-primary min-h-[44px] min-w-[44px]">
+                    <Settings className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-manga-card border-manga-border w-64">
+                  {/* Zoom Controls */}
+                  <div className="px-3 py-2 border-b border-manga-border">
+                    <div className="text-manga-text text-sm font-medium mb-2">Zoom</div>
+                    <div className="flex items-center justify-between">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setZoom(Math.max(50, zoom - 10))}
+                        className="text-manga-text hover:text-manga-primary"
+                      >
+                        <ZoomOut className="w-4 h-4" />
+                      </Button>
+                      <span className="text-manga-text text-sm px-4">
+                        {zoom}%
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setZoom(Math.min(200, zoom + 10))}
+                        className="text-manga-text hover:text-manga-primary"
+                      >
+                        <ZoomIn className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* View Mode */}
+                  <div className="px-3 py-2">
+                    <div className="text-manga-text text-sm font-medium mb-2">Reading Mode</div>
+                    <Select value={viewMode} onValueChange={setViewMode}>
+                      <SelectTrigger className="bg-manga-darker border-manga-border text-manga-text w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-manga-card border-manga-border">
+                        <SelectItem value="single">Single Page</SelectItem>
+                        <SelectItem value="double">Double Page</SelectItem>
+                        <SelectItem value="vertical">Vertical Scroll</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </header>

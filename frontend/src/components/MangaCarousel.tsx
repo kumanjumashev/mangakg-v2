@@ -1,4 +1,5 @@
 import { useState } from "react";
+import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MangaCard } from "./MangaCard";
@@ -31,7 +32,29 @@ export const MangaCarousel = ({
   onRetry
 }: MangaCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const itemsPerView = 6;
+  
+  // Responsive items per view: 2 on mobile, 4 on tablet, 6 on desktop
+  const getItemsPerView = () => {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth < 768) return 2; // Mobile
+      if (window.innerWidth < 1024) return 4; // Tablet  
+      return 6; // Desktop
+    }
+    return 6; // Default for SSR
+  };
+
+  const [itemsPerView, setItemsPerView] = useState(getItemsPerView);
+
+  // Update itemsPerView on window resize
+  React.useEffect(() => {
+    const handleResize = () => {
+      setItemsPerView(getItemsPerView());
+      setCurrentIndex(0); // Reset carousel position on resize
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Use series data if available, otherwise fall back to mangas
   const items = series.length > 0 ? series : mangas;
@@ -71,7 +94,7 @@ export const MangaCarousel = ({
                   variant="ghost"
                   size="icon"
                   onClick={prevSlide}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 opacity-0 transition-opacity duration-300 bg-manga-card/80 hover:bg-manga-card-hover border border-manga-border text-manga-text hover:text-manga-primary nav-button-left"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 opacity-0 transition-opacity duration-300 bg-manga-card/80 hover:bg-manga-card-hover border border-manga-border text-manga-text hover:text-manga-primary nav-button-left min-h-[44px] min-w-[44px]"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </Button>
@@ -81,7 +104,7 @@ export const MangaCarousel = ({
                   variant="ghost"
                   size="icon"
                   onClick={nextSlide}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 opacity-0 transition-opacity duration-300 bg-manga-card/80 hover:bg-manga-card-hover border border-manga-border text-manga-text hover:text-manga-primary nav-button-right"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 opacity-0 transition-opacity duration-300 bg-manga-card/80 hover:bg-manga-card-hover border border-manga-border text-manga-text hover:text-manga-primary nav-button-right min-h-[44px] min-w-[44px]"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </Button>
@@ -100,7 +123,7 @@ export const MangaCarousel = ({
                 {items.map((item) => (
                   <div 
                     key={('slug' in item) ? item.slug : item.id} 
-                    className="flex-none px-2 w-1/6 min-w-0"
+                    className="flex-none px-2 min-w-0 w-1/2 sm:w-1/4 lg:w-1/6"
                     style={{ maxWidth: '200px' }}
                   >
                     {'slug' in item ? (
