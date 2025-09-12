@@ -51,11 +51,12 @@ export const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-manga-primary text-manga-dark px-2 py-1 rounded font-bold text-lg">
-              Manga
-            </div>
-            <span className="text-manga-text font-semibold text-lg">LIB</span>
+          <Link to="/" className="flex items-center">
+            <img 
+              src="/logo.png" 
+              alt="MangaKG" 
+              className="h-8 w-auto"
+            />
           </Link>
 
           {/* Desktop Navigation */}
