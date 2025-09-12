@@ -24,13 +24,10 @@ from .serializers import (
 def health_check(request):
     """Health check endpoint for deployment monitoring."""
     try:
-        # Basic health check without database dependency
-        from django.conf import settings
+        # Very basic health check - just return that the service is running
         return Response({
             'status': 'healthy', 
-            'service': 'mangakg-backend',
-            'debug': settings.DEBUG,
-            'allowed_hosts': len(settings.ALLOWED_HOSTS)
+            'service': 'mangakg-backend'
         })
     except Exception as e:
         return Response({
@@ -278,3 +275,40 @@ def page_view(request, series_slug, volume, chapter_number, page_number):
         'next_page': next_page
     }
     return render(request, 'reader/page_detail.html', context)
+
+
+@api_view(['GET'])
+def serve_media_file(request, file_path):
+    """
+    Serve media files from S3 storage through Django.
+    This allows us to serve private S3 files with proper authentication.
+    """
+    from django.core.files.storage import default_storage
+    from django.http import HttpResponse, Http404
+    import mimetypes
+    
+    try:
+        # Check if file exists
+        if not default_storage.exists(file_path):
+            raise Http404("File not found")
+        
+        # Open the file from S3
+        file = default_storage.open(file_path, 'rb')
+        
+        # Determine content type
+        content_type, _ = mimetypes.guess_type(file_path)
+        if content_type is None:
+            content_type = 'application/octet-stream'
+        
+        # Create response with the file content
+        response = HttpResponse(file.read(), content_type=content_type)
+        
+        # Add caching headers for better performance
+        response['Cache-Control'] = 'public, max-age=86400'  # 24 hours
+        
+        file.close()
+        return response
+        
+    except Exception as e:
+        # Log error but don't expose internal details
+        return HttpResponse(status=404)

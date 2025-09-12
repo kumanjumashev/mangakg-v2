@@ -63,8 +63,11 @@ class PageSerializer(serializers.ModelSerializer):
         if obj.image:
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
+                # Use Django media serving endpoint instead of direct S3 URLs
+                from django.urls import reverse
+                media_url = reverse('reader:serve-media', kwargs={'file_path': obj.image.name})
+                return request.build_absolute_uri(media_url)
+            return f'/media/{obj.image.name}'
         return None
 
 
@@ -118,8 +121,11 @@ class SeriesListSerializer(serializers.ModelSerializer):
         if obj.cover:
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.cover.url)
-            return obj.cover.url
+                # Use Django media serving endpoint instead of direct S3 URLs
+                from django.urls import reverse
+                media_url = reverse('reader:serve-media', kwargs={'file_path': obj.cover.name})
+                return request.build_absolute_uri(media_url)
+            return f'/media/{obj.cover.name}'
         return None
     
     def get_latest_chapter(self, obj):
@@ -159,6 +165,9 @@ class SeriesDetailSerializer(serializers.ModelSerializer):
         if obj.cover:
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.cover.url)
-            return obj.cover.url
+                # Use Django media serving endpoint instead of direct S3 URLs
+                from django.urls import reverse
+                media_url = reverse('reader:serve-media', kwargs={'file_path': obj.cover.name})
+                return request.build_absolute_uri(media_url)
+            return f'/media/{obj.cover.name}'
         return None

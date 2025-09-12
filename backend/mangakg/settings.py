@@ -54,6 +54,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'reader.middleware.HealthCheckMiddleware',  # Handle health checks first
+    'reader.middleware.StorageErrorMiddleware',  # Handle storage errors early
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -157,11 +158,8 @@ LOCALE_PATHS = [
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATICFILES_STORAGE is now configured in STORAGES setting below
 
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -213,17 +211,57 @@ CORS_ALLOW_HEADERS = [
 FILE_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024  # 500MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024  # 500MB
 
-# Custom storage backend for Fly.io Tigris
-if os.getenv('AWS_ACCESS_KEY_ID'):
-    DEFAULT_FILE_STORAGE = 'reader.storage.TigrisMediaStorage'
+# Fly.io Tigris storage configuration
+USE_TIGRIS = os.getenv('AWS_ACCESS_KEY_ID') is not None
+
+if USE_TIGRIS:
+    # Configure Tigris S3-compatible storage using modern STORAGES setting
+    STORAGES = {
+        "default": {
+            "BACKEND": "reader.storage.TigrisMediaStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+    
+    # Tigris credentials and configuration
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'auto')
-    AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME') or os.getenv('BUCKET_NAME', 'mangakg-media')
+    
+    # Tigris endpoint configuration - Frankfurt region for optimal performance
+    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME') or os.getenv('AWS_REGION', 'fra')  # Frankfurt region
+    AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL') or os.getenv('AWS_ENDPOINT_URL_S3', 'https://fly.storage.tigris.dev')
     AWS_S3_CUSTOM_DOMAIN = os.getenv('AWS_S3_CUSTOM_DOMAIN')
-    AWS_DEFAULT_ACL = None
-    AWS_S3_FILE_OVERWRITE = False
+    
+    # S3 configuration for Tigris
+    AWS_DEFAULT_ACL = 'public-read'  # Make uploaded files publicly readable
+    AWS_S3_FILE_OVERWRITE = False  # Prevent accidental overwrites
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',  # 24 hours cache for media files
+    }
+    AWS_QUERYSTRING_AUTH = False  # Public access to media files
+    AWS_S3_USE_SSL = True
+    AWS_S3_VERIFY = True
+    
+    # Update media URL to use Tigris CDN if custom domain is configured
+    if AWS_S3_CUSTOM_DOMAIN:
+        MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+    else:
+        MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/media/'
+else:
+    # Local development storage
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 # Sentry configuration for error tracking
 if os.getenv('SENTRY_DSN'):

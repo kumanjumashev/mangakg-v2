@@ -28,6 +28,9 @@ MANIFEST
 node_modules/
 staticfiles
 
+# Media files (manga content) - should not be deployed
+backend/media/
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.

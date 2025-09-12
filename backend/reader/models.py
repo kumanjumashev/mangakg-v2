@@ -13,6 +13,8 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import F
@@ -377,25 +379,22 @@ class Chapter(models.Model):
             return
             
         try:
-            # Create directory for extracted pages
+            # Prepare for extracting pages
             vol_num = self.volume.number if self.volume else 0
-            chapter_dir = Path(settings.MEDIA_ROOT) / 'series' / self.series.slug / f'vol{vol_num}' / f'ch{self.number}'
+            base_path = f'series/{self.series.slug}/vol{vol_num}/ch{self.number}'
             
-            if chapter_dir.exists():
-                rmtree(chapter_dir)
-            chapter_dir.mkdir(parents=True, exist_ok=True)
+            # Delete existing pages first (they will be recreated)
+            self.pages.all().delete()
             
             # Extract and validate ZIP file
             pages = []
-            # Get file path - handle both TemporaryUploadedFile and InMemoryUploadedFile
-            if hasattr(self.file, 'path'):
-                file_path = self.file.path
-            else:
-                # For in-memory files, we need to use the file object directly
-                self.file.seek(0)
-                file_path = self.file
             
-            with ZipFile(file_path) as zf:
+            # Handle file access for both local and S3 storage
+            self.file.seek(0)
+            # For S3 storage, we always work with the file object directly
+            file_obj = self.file
+            
+            with ZipFile(file_obj) as zf:
                 namelist = sorted(zf.namelist())
                 page_number = 1
                 
@@ -416,27 +415,25 @@ class Chapter(models.Model):
                     ext = os.path.splitext(name)[-1]
                     filename = f'{file_hash}{ext}'
                     
-                    # Save file
-                    file_path = chapter_dir / filename
-                    file_path.write_bytes(data)
+                    # Save file using Django's default storage
+                    relative_path = f'{base_path}/{filename}'
                     
-                    # Create page object
-                    relative_path = f'series/{self.series.slug}/vol{vol_num}/ch{self.number}/{filename}'
+                    # Use Django's default storage to save the file (works with both local and S3)
+                    saved_path = default_storage.save(relative_path, ContentFile(data))
                     
                     # Re-open image to get dimensions
                     img = Image.open(io.BytesIO(data))
                     pages.append(Page(
                         chapter=self,
                         number=page_number,
-                        image=relative_path,
+                        image=saved_path,
                         width=img.width,
                         height=img.height,
                         mime_type=img.get_format_mimetype() or 'image/jpeg'
                     ))
                     page_number += 1
             
-            # Delete existing pages and create new ones
-            self.pages.all().delete()
+            # Create new pages (old ones were already deleted)
             Page.objects.bulk_create(pages)
             
             # Clean up uploaded file and clear the field

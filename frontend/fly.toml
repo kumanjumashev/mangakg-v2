@@ -7,6 +7,10 @@ app = 'mangakg-frontend'
 primary_region = 'waw'
 
 [build]
+  [build.args]
+    VITE_API_BASE_URL = 'https://mangakg-backend.fly.dev/api'
+
+[env]
 
 [http_service]
   internal_port = 8080

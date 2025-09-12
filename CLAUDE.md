@@ -43,6 +43,39 @@ npm run lint         # Run ESLint
 npm run preview      # Preview production build
 ```
 
+### Environment Configuration
+
+#### Separate Development and Production Environments
+The project maintains strict separation between development and production environments:
+
+**Development Environment:**
+- Frontend: `http://localhost:8080` (Vite dev server)
+- Backend: `http://127.0.0.1:8000` (Django runserver)
+- Database: Local SQLite (`/backend/db.sqlite3`) 
+- Configuration: Uses Vite proxy (`/api` → `http://127.0.0.1:8000`)
+- Data: Local test manga data for development
+
+**Production Environment (Fly.io):**
+- Frontend: `https://mangakg-frontend.fly.dev`
+- Backend: `https://mangakg-backend.fly.dev`
+- Database: Production database (PostgreSQL or separate SQLite)
+- Configuration: Direct HTTPS API calls
+- Data: Live production manga data
+
+#### Environment Files:
+- `.env.local`: Development environment (uses proxy, local backend)
+- `.env.production`: Production environment (direct Fly.io backend)
+- `fly.toml`: Production deployment configuration with environment variables
+
+#### API Configuration Logic:
+```typescript
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (
+  import.meta.env.PROD 
+    ? 'https://mangakg-backend.fly.dev/api'  // Production
+    : '/api'                                 // Development (proxy)
+);
+```
+
 ### Frontend Testing Protocol with Playwright MCP
 After making any frontend changes, always conduct comprehensive testing using Playwright MCP:
 
@@ -80,6 +113,14 @@ poetry run python manage.py createsuperuser  # Create admin user
 poetry run python manage.py test reader   # Run backend tests
 poetry run python manage.py collectstatic # Collect static files for production
 ```
+
+#### Health Check Endpoints
+- `/` - Root endpoint: `{"service": "mangakg-backend", "status": "running", "message": "API available at /api/"}`
+- `/api/health/` - Main health check endpoint (with trailing slash)
+- `/api/health` - Alternative health check endpoint (without trailing slash)
+- Health endpoints return: `{"status": "healthy", "service": "mangakg-backend"}`
+- Optimized for fast response times (<5ms) for Fly.io health checks
+- Root endpoint prevents 404 errors during health monitoring
 
 ### Installation
 ```bash

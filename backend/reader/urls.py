@@ -4,8 +4,17 @@ URL configuration for the reader app.
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from django.http import JsonResponse
 
 from . import views
+
+def root_handler(request):
+    """Simple root handler to prevent 404s on health checks."""
+    return JsonResponse({
+        'service': 'mangakg-backend',
+        'status': 'running',
+        'message': 'API available at /api/'
+    })
 
 # Create a router for DRF ViewSets
 router = DefaultRouter()
@@ -18,6 +27,9 @@ router.register(r'categories', views.CategoryViewSet)
 app_name = 'reader'
 
 urlpatterns = [
+    # Root handler for health checks
+    path('', root_handler, name='root'),
+    
     # API endpoints
     path('api/', include(router.urls)),
     
@@ -28,6 +40,9 @@ urlpatterns = [
     # Custom API endpoints
     path('api/series/<slug:slug>/chapters/', views.SeriesChaptersView.as_view(), name='series-chapters'),
     path('api/chapters/<int:chapter_id>/pages/', views.ChapterPagesView.as_view(), name='chapter-pages'),
+    
+    # Media serving endpoint for private S3 files
+    path('media/<path:file_path>', views.serve_media_file, name='serve-media'),
     
     # Reading interface endpoints
     path('series/<slug:slug>/', views.series_detail, name='series-detail'),
