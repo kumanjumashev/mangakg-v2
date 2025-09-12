@@ -68,14 +68,6 @@ export const Header = () => {
             >
               Catalogue
             </Link>
-            <Link
-              to="/about"
-              className={`text-sm font-medium transition-colors hover:text-manga-primary ${
-                isActive("/about") ? "text-manga-primary" : "text-manga-text"
-              }`}
-            >
-              About
-            </Link>
             <form onSubmit={handleSearch} className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-manga-text-muted w-4 h-4" />
               <Input
@@ -86,10 +78,19 @@ export const Header = () => {
                 className="pl-10 w-64 bg-manga-card border-manga-border text-manga-text placeholder:text-manga-text-muted"
               />
             </form>
-            <Button variant="ghost" size="sm" className="text-manga-text hover:text-manga-primary">
+            <Link
+              to="/about"
+              className={`text-sm font-medium transition-colors hover:text-manga-primary ${
+                isActive("/about") ? "text-manga-primary" : "text-manga-text"
+              }`}
+            >
+              About
+            </Link>
+            {/* Temporarily hidden - Forum button */}
+            {/* <Button variant="ghost" size="sm" className="text-manga-text hover:text-manga-primary">
               <MessageCircle className="w-4 h-4 mr-2" />
               Forum
-            </Button>
+            </Button> */}
           </nav>
 
           {/* Right side buttons */}
@@ -147,10 +148,11 @@ export const Header = () => {
                   className="pl-10 bg-manga-card border-manga-border text-manga-text placeholder:text-manga-text-muted"
                 />
               </form>
-              <Button variant="ghost" size="sm" className="text-manga-text hover:text-manga-primary justify-start">
+              {/* Temporarily hidden - Mobile Forum button */}
+              {/* <Button variant="ghost" size="sm" className="text-manga-text hover:text-manga-primary justify-start">
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Forum
-              </Button>
+              </Button> */}
             </nav>
           </div>
         )}

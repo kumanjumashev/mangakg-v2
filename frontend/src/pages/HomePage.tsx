@@ -50,8 +50,8 @@ const HomePage = () => {
       <main className="container mx-auto px-4 py-8">
         {/* Featured Section */}
         <section className="mb-12">
+          {/* Featured Manga section - title removed */}
           <MangaCarousel 
-            title="Featured Manga" 
             series={featuredData?.results || []}
             isLoading={featuredLoading}
             error={featuredError}

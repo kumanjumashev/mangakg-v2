@@ -122,7 +122,8 @@ const ContinueReadingCard = ({ item, onRemove }: ContinueReadingCardProps) => {
             alt={item.mangaTitle}
             className="w-16 h-20 object-cover rounded"
             onError={(e) => {
-              e.currentTarget.src = "/api/placeholder/300/400";
+              // Hide image if it fails to load
+              e.currentTarget.style.display = 'none';
             }}
           />
         </div>

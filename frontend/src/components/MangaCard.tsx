@@ -41,7 +41,7 @@ export const MangaCard = ({
   const linkTo = `/manga/${series ? series.id : id}`;
   const displayTitle = series ? series.title : title || "";
   const displayRating = series ? (series.rating === 'safe' ? 8.5 : 7.5) : rating || 0; // Convert rating string to number
-  const displayCover = series?.cover_url || coverImage || "/api/placeholder/300/400";
+  const displayCover = series?.cover_url || coverImage;
   const displayLatestChapter = series?.latest_chapter?.number || latestChapter;
 
   return (
@@ -53,8 +53,8 @@ export const MangaCard = ({
             alt={displayTitle}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             onError={(e) => {
-              // Fallback to placeholder if image fails to load
-              e.currentTarget.src = "/api/placeholder/300/400";
+              // Hide image if it fails to load
+              e.currentTarget.style.display = 'none';
             }}
           />
           {/* TODO: Implement rating system for v2 */}

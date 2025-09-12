@@ -201,7 +201,7 @@ const ReaderPage = () => {
         mangaId: currentSeries.id.toString(),
         mangaTitle: chapterData.series_title,
         mangaSlug: chapterData.series_slug,
-        coverImage: currentSeries.cover_url || "/api/placeholder/300/400",
+        coverImage: currentSeries.cover_url,
         currentChapter: chapterData.number,
         currentChapterTitle: chapterData.title,
         currentChapterId: chapterId || "",
@@ -273,8 +273,8 @@ const ReaderPage = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/catalogue" className="text-manga-text hover:text-manga-primary">
-                    Back to Catalogue
+                  <Link to="/" className="text-manga-text hover:text-manga-primary">
+                    Back to Home
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -447,7 +447,8 @@ const ReaderPage = () => {
                     cursor: "pointer"
                   }}
                   onError={(e) => {
-                    e.currentTarget.src = "/api/placeholder/800/1200";
+                    // Hide image if it fails to load
+                    e.currentTarget.style.display = 'none';
                   }}
                 />
               </div>
@@ -462,7 +463,8 @@ const ReaderPage = () => {
                     className="max-w-md h-auto shadow-2xl rounded-lg"
                     style={{ maxHeight: '90vh' }}
                     onError={(e) => {
-                      e.currentTarget.src = "/api/placeholder/800/1200";
+                      // Hide image if it fails to load
+                      e.currentTarget.style.display = 'none';
                     }}
                   />
                 )}
@@ -473,7 +475,8 @@ const ReaderPage = () => {
                   style={{ maxHeight: '90vh' }}
                   onClick={enhancedNextPage}
                   onError={(e) => {
-                    e.currentTarget.src = "/api/placeholder/800/1200";
+                    // Hide image if it fails to load
+                    e.currentTarget.style.display = 'none';
                   }}
                 />
               </div>
@@ -492,7 +495,8 @@ const ReaderPage = () => {
                       maxWidth: '800px'
                     }}
                     onError={(e) => {
-                      e.currentTarget.src = "/api/placeholder/800/1200";
+                      // Hide image if it fails to load
+                      e.currentTarget.style.display = 'none';
                     }}
                   />
                 ))}

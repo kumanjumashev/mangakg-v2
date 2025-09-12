@@ -8,7 +8,7 @@ import { ErrorPage } from "@/components/ui/error-page";
 import { Series } from "@/lib/types";
 
 interface MangaCarouselProps {
-  title: string;
+  title?: string;
   // Support both old format (for legacy compatibility) and new Series type
   mangas?: Array<{
     id: string;
@@ -73,11 +73,11 @@ export const MangaCarousel = ({
 
   return (
     <div className="mb-6">
-      <h2 className="text-2xl font-bold text-manga-text mb-4">{title}</h2>
+      {title && <h2 className="text-2xl font-bold text-manga-text mb-4">{title}</h2>}
       
       <div className="relative bg-manga-card rounded-xl border border-manga-border p-4 carousel-container">
         {isLoading ? (
-          <LoadingState message={`Loading ${title.toLowerCase()}...`} className="py-12" />
+          <LoadingState message={`Loading ${title ? title.toLowerCase() : 'manga'}...`} className="py-12" />
         ) : error ? (
           <ErrorPage error={error} onRetry={onRetry} className="py-8" />
         ) : items.length === 0 ? (

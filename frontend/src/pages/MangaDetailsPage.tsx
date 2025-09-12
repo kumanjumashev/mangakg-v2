@@ -9,8 +9,6 @@ import { ErrorPage } from "@/components/ui/error-page";
 import { BookOpen, Calendar, User, Eye, Play, ChevronLeft, ChevronRight } from "lucide-react";
 // TODO: Re-enable for v2 - import { Star, Heart, Bookmark } from "lucide-react";
 import { useSeriesDetail, useChaptersList } from "@/hooks/useApi";
-import attackOnTitanCover from "@/assets/manga-covers/attack-on-titan.jpg";
-import attackOnTitanBanner from "@/assets/banners/attack-on-titan-banner.jpg";
 
 const MangaDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -73,9 +71,9 @@ const MangaDetailsPage = () => {
     }
   };
 
-  // Use fallback images for now since series might not have banner images
-  const coverImage = seriesData.cover_url || attackOnTitanCover;
-  const bannerImage = seriesData.cover_url || attackOnTitanBanner;
+  // Use series images or fallback to placeholder API
+  const coverImage = seriesData.cover_url;
+  const bannerImage = seriesData.cover_url;
 
   return (
     <div className="min-h-screen bg-manga-dark">
@@ -100,7 +98,8 @@ const MangaDetailsPage = () => {
                     alt={seriesData.title}
                     className="w-48 h-72 object-cover rounded-lg shadow-2xl"
                     onError={(e) => {
-                      e.currentTarget.src = "/api/placeholder/300/400";
+                      // Hide image if it fails to load
+                      e.currentTarget.style.display = 'none';
                     }}
                   />
                 </div>
