@@ -5,12 +5,14 @@ import { Progress } from "@/components/ui/progress";
 import { LoadingState } from "@/components/ui/loading-spinner";
 import { ContinueReadingItem } from "@/types/continueReading";
 import { useContinueReading } from "@/hooks/useContinueReading";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface ContinueReadingSectionProps {
   className?: string;
 }
 
 export const ContinueReadingSection = ({ className = "" }: ContinueReadingSectionProps) => {
+  const { t } = useTranslation();
   const { items, isLoading, error, removeItem, refreshData } = useContinueReading();
 
   // Don't render if no items and not loading
@@ -35,9 +37,9 @@ export const ContinueReadingSection = ({ className = "" }: ContinueReadingSectio
       <section className={`mb-12 ${className}`}>
         <div className="flex items-center mb-6">
           <BookOpen className="w-6 h-6 text-manga-primary mr-2" />
-          <h2 className="text-2xl font-bold text-manga-text">Continue Reading</h2>
+          <h2 className="text-2xl font-bold text-manga-text">{t('continueReading.continueReading')}</h2>
         </div>
-        <LoadingState message="Loading reading history..." className="py-8" />
+        <LoadingState message={t('loading.loadingHistory')} className="py-8" />
       </section>
     );
   }
@@ -47,14 +49,14 @@ export const ContinueReadingSection = ({ className = "" }: ContinueReadingSectio
       <section className={`mb-12 ${className}`}>
         <div className="flex items-center mb-6">
           <BookOpen className="w-6 h-6 text-manga-primary mr-2" />
-          <h2 className="text-2xl font-bold text-manga-text">Continue Reading</h2>
+          <h2 className="text-2xl font-bold text-manga-text">{t('continueReading.continueReading')}</h2>
         </div>
         <div className="flex items-center justify-center py-8 text-center">
           <div>
             <p className="text-manga-text-muted mb-4">{error}</p>
             <Button onClick={handleRefresh} variant="outline" size="sm">
               <RotateCcw className="w-4 h-4 mr-2" />
-              Retry
+              {t('continueReading.retry')}
             </Button>
           </div>
         </div>
@@ -67,7 +69,7 @@ export const ContinueReadingSection = ({ className = "" }: ContinueReadingSectio
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
           <BookOpen className="w-6 h-6 text-manga-primary mr-2" />
-          <h2 className="text-2xl font-bold text-manga-text">Continue Reading</h2>
+          <h2 className="text-2xl font-bold text-manga-text">{t('continueReading.continueReading')}</h2>
         </div>
         <Button 
           onClick={handleRefresh} 
@@ -76,16 +78,17 @@ export const ContinueReadingSection = ({ className = "" }: ContinueReadingSectio
           className="text-manga-text-muted hover:text-manga-primary"
         >
           <RotateCcw className="w-4 h-4 mr-2" />
-          Refresh
+          {t('continueReading.refresh')}
         </Button>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.map((item) => (
-          <ContinueReadingCard 
-            key={item.mangaId} 
+          <ContinueReadingCard
+            key={item.mangaId}
             item={item}
             onRemove={handleRemoveItem}
+            t={t}
           />
         ))}
       </div>
@@ -96,9 +99,10 @@ export const ContinueReadingSection = ({ className = "" }: ContinueReadingSectio
 interface ContinueReadingCardProps {
   item: ContinueReadingItem;
   onRemove: (e: React.MouseEvent, mangaId: string) => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
-const ContinueReadingCard = ({ item, onRemove }: ContinueReadingCardProps) => {
+const ContinueReadingCard = ({ item, onRemove, t }: ContinueReadingCardProps) => {
   const linkTo = item.currentChapterId ? 
     `/read/${item.currentChapterId}/${item.currentPage}` : 
     `/manga/${item.mangaId}`;
@@ -132,14 +136,14 @@ const ContinueReadingCard = ({ item, onRemove }: ContinueReadingCardProps) => {
             {item.mangaTitle}
           </h3>
           <p className="text-manga-text-muted text-sm mb-2">
-            Chapter {item.currentChapter} - Page {item.currentPage} of {item.totalPagesInChapter}
+            {t('continueReading.chapterPageProgress', { chapter: item.currentChapter, page: item.currentPage, total: item.totalPagesInChapter })}
           </p>
           <Progress value={item.progressPercentage} className="mb-3" />
           <Button 
             size="sm" 
             className="bg-manga-primary hover:bg-manga-primary-hover text-manga-dark pointer-events-none"
           >
-            Continue Reading
+            {t('continueReading.continueReading')}
           </Button>
         </div>
       </Link>

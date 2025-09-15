@@ -13,7 +13,7 @@
     --card-foreground: 0 0% 95%;
     --popover: 220 13% 10%;
     --popover-foreground: 0 0% 95%;
-    --primary: 25 95% 53%;
+    --primary: 266, 86%, 56%;
     --primary-foreground: 220 13% 7%;
     --secondary: 220 13% 15%;
     --secondary-foreground: 0 0% 85%;
@@ -29,7 +29,7 @@
     --radius: 0.5rem;
 
     /* Custom manga theme colors */
-    --manga-primary: 25 95% 53%;
+    --manga-primary: 266, 86%, 56%;
     --manga-primary-hover: 25 95% 45%;
     --manga-dark: 220 13% 7%;
     --manga-darker: 220 20% 5%;
@@ -53,7 +53,7 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 25 95% 53%;
+    --primary: 266, 86%, 56%;
     --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96%;
     --secondary-foreground: 222.2 84% 4.9%;
@@ -68,7 +68,7 @@
     --ring: 25 95% 53%;
 
     /* Custom manga theme colors for light mode */
-    --manga-primary: 25 95% 53%;
+    --manga-primary: 266, 86%, 56%;
     --manga-primary-hover: 25 95% 45%;
     --manga-dark: 0 0% 100%;
     --manga-darker: 210 40% 98%;

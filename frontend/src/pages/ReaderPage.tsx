@@ -10,8 +10,10 @@ import { useChapterPages, useSeriesDetail, useSeriesList } from "@/hooks/useApi"
 import { useContinueReading } from "@/hooks/useContinueReading";
 import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
 import ChapterSelector from "@/components/ChapterSelector";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const ReaderPage = () => {
+  const { t } = useTranslation();
   const { chapterId, page } = useParams<{ chapterId: string; page?: string }>();
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(page ? parseInt(page) : 1);
@@ -235,7 +237,7 @@ const ReaderPage = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-manga-darker">
-        <LoadingState message="Loading chapter..." className="py-24" />
+        <LoadingState message={t('loading.loadingChapter')} className="py-24" />
       </div>
     );
   }
@@ -263,18 +265,18 @@ const ReaderPage = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="text-manga-text hover:text-manga-primary">
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back
+                  {t('reader.back')}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-manga-card border-manga-border">
                 <DropdownMenuItem asChild>
                   <Link to={`/manga/${currentSeries?.id || chapterData.series_slug}`} className="text-manga-text hover:text-manga-primary">
-                    Back to Details
+                    {t('reader.backToDetails')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/" className="text-manga-text hover:text-manga-primary">
-                    Back to Home
+                    {t('reader.backToHome')}
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -284,7 +286,7 @@ const ReaderPage = () => {
             <div className="min-w-0 flex-1 hidden md:block">
               <h1 className="text-manga-text font-bold text-base sm:text-lg truncate">{chapterData.series_title}</h1>
               <p className="text-manga-text-muted text-xs sm:text-sm truncate">
-                Chapter {chapterData.number}: {chapterData.title}
+                {t('manga.chapterNumber', { number: chapterData.number, title: chapterData.title })}
               </p>
             </div>
           </div>
@@ -351,9 +353,9 @@ const ReaderPage = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-manga-card border-manga-border">
-                  <SelectItem value="single">Single</SelectItem>
-                  <SelectItem value="double">Double</SelectItem>
-                  <SelectItem value="vertical">Vertical</SelectItem>
+                  <SelectItem value="single">{t('reader.single')}</SelectItem>
+                  <SelectItem value="double">{t('reader.double')}</SelectItem>
+                  <SelectItem value="vertical">{t('reader.vertical')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -369,7 +371,7 @@ const ReaderPage = () => {
                 <DropdownMenuContent align="end" className="bg-manga-card border-manga-border w-64">
                   {/* Zoom Controls */}
                   <div className="px-3 py-2 border-b border-manga-border">
-                    <div className="text-manga-text text-sm font-medium mb-2">Zoom</div>
+                    <div className="text-manga-text text-sm font-medium mb-2">{t('reader.zoom')}</div>
                     <div className="flex items-center justify-between">
                       <Button
                         variant="ghost"
@@ -395,15 +397,15 @@ const ReaderPage = () => {
                   
                   {/* View Mode */}
                   <div className="px-3 py-2">
-                    <div className="text-manga-text text-sm font-medium mb-2">Reading Mode</div>
+                    <div className="text-manga-text text-sm font-medium mb-2">{t('reader.readingMode')}</div>
                     <Select value={viewMode} onValueChange={setViewMode}>
                       <SelectTrigger className="bg-manga-darker border-manga-border text-manga-text w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-manga-card border-manga-border">
-                        <SelectItem value="single">Single Page</SelectItem>
-                        <SelectItem value="double">Double Page</SelectItem>
-                        <SelectItem value="vertical">Vertical Scroll</SelectItem>
+                        <SelectItem value="single">{t('reader.singlePage')}</SelectItem>
+                        <SelectItem value="double">{t('reader.doublePage')}</SelectItem>
+                        <SelectItem value="vertical">{t('reader.verticalScroll')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -420,7 +422,7 @@ const ReaderPage = () => {
         {viewMode !== "vertical" && (
           <div className="text-center mb-4">
             <span className="text-manga-text-muted">
-              Page {currentPage} of {totalPages}
+              {t('reader.pageCounter', { current: currentPage, total: totalPages })}
             </span>
           </div>
         )}
@@ -515,7 +517,7 @@ const ReaderPage = () => {
               className="bg-manga-card hover:bg-manga-card-hover"
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
-              Previous
+              {t('reader.previous')}
             </Button>
 
             <Select 
@@ -532,7 +534,7 @@ const ReaderPage = () => {
               <SelectContent className="bg-manga-card border-manga-border max-h-60">
                 {chapterData.pages.map((page) => (
                   <SelectItem key={page.number} value={page.number.toString()} className="text-manga-text">
-                    Page {page.number}
+                    {t('reader.page', { number: page.number })}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -544,7 +546,7 @@ const ReaderPage = () => {
               disabled={currentPage >= totalPages}
               className="bg-manga-card hover:bg-manga-card-hover"
             >
-              Next
+              {t('reader.next')}
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
@@ -557,14 +559,14 @@ const ReaderPage = () => {
             className="bg-manga-primary hover:bg-manga-primary-hover text-manga-dark"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Series
+            {t('reader.backToSeries')}
           </Button>
         </div>
 
         {/* Keyboard shortcuts info */}
         <div className="text-center mt-8 text-manga-text-muted text-sm">
-          <p>Use arrow keys, WASD, or click to navigate pages</p>
-          <p>Use Ctrl + arrow keys to navigate between chapters</p>
+          <p>{t('reader.keyboardShortcuts1')}</p>
+          <p>{t('reader.keyboardShortcuts2')}</p>
         </div>
       </main>
     </div>

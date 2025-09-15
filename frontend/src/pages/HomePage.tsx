@@ -4,15 +4,18 @@ import { ContinueReadingSection } from "@/components/ContinueReadingSection";
 import { LoadingState } from "@/components/ui/loading-spinner";
 import { ErrorPage, CookingPage } from "@/components/ui/error-page";
 import { useFeaturedSeries, useRecentUpdates } from "@/hooks/useApi";
+import { useTranslation } from "@/hooks/useTranslation";
 
 
 const HomePage = () => {
+  const { t } = useTranslation();
+
   // Fetch data using API hooks
-  const { 
-    data: featuredData, 
-    isLoading: featuredLoading, 
+  const {
+    data: featuredData,
+    isLoading: featuredLoading,
     error: featuredError,
-    refetch: refetchFeatured 
+    refetch: refetchFeatured
   } = useFeaturedSeries();
 
   const { 
@@ -64,8 +67,8 @@ const HomePage = () => {
 
         {/* Recent Updates */}
         <section>
-          <MangaCarousel 
-            title="Recent Updates" 
+          <MangaCarousel
+            title={t('manga.recentUpdates')}
             series={recentData?.results || []}
             isLoading={recentLoading}
             error={recentError}

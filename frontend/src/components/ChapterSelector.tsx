@@ -3,6 +3,7 @@ import { Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Chapter, Volume } from "@/lib/types";
 import { getPublishedChapters, formatChapterText, truncateText, isCurrentChapter } from "@/lib/utils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface ChapterSelectorProps {
   chapters: Chapter[];
@@ -19,6 +20,7 @@ const ChapterSelector: React.FC<ChapterSelectorProps> = ({
   readChapterIds = new Set(),
   className,
 }) => {
+  const { t } = useTranslation();
   // Get only published chapters and sort by number (ascending)
   const publishedChapters = getPublishedChapters(chapters).sort((a, b) => a.number - b.number);
   
@@ -32,14 +34,14 @@ const ChapterSelector: React.FC<ChapterSelectorProps> = ({
     >
       <SelectTrigger className={`bg-manga-card border-manga-border text-manga-text min-w-[200px] ${className || ''}`}>
         <SelectValue>
-          {currentChapter ? formatChapterText(currentChapter) : 'Select Chapter'}
+          {currentChapter ? formatChapterText(currentChapter, undefined, t) : t('reader.selectChapter')}
         </SelectValue>
       </SelectTrigger>
       <SelectContent className="bg-manga-card border-manga-border max-h-60">
         {publishedChapters.map((chapter) => {
           const isRead = readChapterIds.has(chapter.id);
           const isCurrent = isCurrentChapter(chapter, currentChapterId);
-          const displayText = formatChapterText(chapter);
+          const displayText = formatChapterText(chapter, undefined, t);
           const truncatedText = truncateText(displayText);
           
           return (

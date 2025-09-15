@@ -13,8 +13,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSeriesList, useCategories } from "@/hooks/useApi";
 import { useDebounce } from "@/lib/utils/debounce";
 import { SearchParams, SeriesStatus } from "@/lib/types";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const CataloguePage = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Initialize state from URL parameters
@@ -136,7 +138,7 @@ const CataloguePage = () => {
                 <CardTitle className="text-manga-text flex items-center justify-between">
                   <div className="flex items-center">
                     <Filter className="w-5 h-5 mr-2" />
-                    Filters
+                    {t('filters.filters')}
                   </div>
                   <Button 
                     variant="ghost" 
@@ -144,7 +146,7 @@ const CataloguePage = () => {
                     onClick={clearFilters}
                     className="text-manga-text-muted hover:text-manga-primary text-xs"
                   >
-                    Clear All
+                    {t('filters.clearAll')}
                   </Button>
                 </CardTitle>
               </CardHeader>
@@ -152,7 +154,7 @@ const CataloguePage = () => {
                 {/* Search */}
                 <div>
                   <label className="text-manga-text text-sm font-medium mb-2 block">
-                    Search by title
+                    {t('search.searchByTitle')}
                   </label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-manga-text-muted w-4 h-4" />
@@ -168,17 +170,17 @@ const CataloguePage = () => {
                 {/* Sort By */}
                 <div>
                   <label className="text-manga-text text-sm font-medium mb-2 block">
-                    Sort by
+                    {t('filters.sortBy')}
                   </label>
                   <Select value={sortBy} onValueChange={setSortBy}>
                     <SelectTrigger className="bg-manga-darker border-manga-border text-manga-text">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-manga-card border-manga-border">
-                      <SelectItem value="popularity">Popularity</SelectItem>
-                      <SelectItem value="rating">Rating</SelectItem>
-                      <SelectItem value="latest">Latest Updates</SelectItem>
-                      <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                      <SelectItem value="popularity">{t('filters.popularity')}</SelectItem>
+                      <SelectItem value="rating">{t('filters.rating')}</SelectItem>
+                      <SelectItem value="latest">{t('filters.latestUpdates')}</SelectItem>
+                      <SelectItem value="alphabetical">{t('filters.alphabetical')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -186,18 +188,18 @@ const CataloguePage = () => {
                 {/* Status */}
                 <div>
                   <label className="text-manga-text text-sm font-medium mb-2 block">
-                    Status
+                    {t('filters.status')}
                   </label>
                   <Select value={status} onValueChange={(value) => setStatus(value as SeriesStatus | "all")}>
                     <SelectTrigger className="bg-manga-darker border-manga-border text-manga-text">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-manga-card border-manga-border">
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="ongoing">Ongoing</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="hiatus">Hiatus</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="all">{t('filters.all')}</SelectItem>
+                      <SelectItem value="ongoing">{t('filters.ongoing')}</SelectItem>
+                      <SelectItem value="completed">{t('filters.completed')}</SelectItem>
+                      <SelectItem value="hiatus">{t('filters.hiatus')}</SelectItem>
+                      <SelectItem value="cancelled">{t('filters.cancelled')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -205,10 +207,10 @@ const CataloguePage = () => {
                 {/* Categories */}
                 <div>
                   <label className="text-manga-text text-sm font-medium mb-2 block">
-                    Categories
+                    {t('filters.categories')}
                   </label>
                   {categoriesLoading ? (
-                    <LoadingState message="Loading categories..." className="py-4" />
+                    <LoadingState message={t('loading.loadingCategories')} className="py-4" />
                   ) : categoriesError ? (
                     <p className="text-manga-danger text-sm">Failed to load categories</p>
                   ) : (
@@ -238,11 +240,11 @@ const CataloguePage = () => {
           {/* Main Content */}
           <div className="flex-1 lg:flex-1 w-full">
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-bold text-manga-text">Catalogue</h1>
+              <h1 className="text-2xl font-bold text-manga-text">{t('navigation.catalogue')}</h1>
               <div className="flex items-center space-x-4">
                 {!seriesLoading && (
                   <span className="text-manga-text-muted text-sm">
-                    {seriesData?.count || 0} manga found
+                    {t('search.mangaFoundCount', { count: seriesData?.count || 0 })}
                   </span>
                 )}
                 <Button
@@ -278,7 +280,7 @@ const CataloguePage = () => {
                       {/* Search */}
                       <div>
                         <label className="text-manga-text text-sm font-medium mb-2 block">
-                          Search by title
+                          {t('search.searchByTitle')}
                         </label>
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-manga-text-muted w-4 h-4" />
@@ -294,17 +296,17 @@ const CataloguePage = () => {
                       {/* Sort By */}
                       <div>
                         <label className="text-manga-text text-sm font-medium mb-2 block">
-                          Sort by
+                          {t('filters.sortBy')}
                         </label>
                         <Select value={sortBy} onValueChange={setSortBy}>
                           <SelectTrigger className="bg-manga-darker border-manga-border text-manga-text">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="bg-manga-card border-manga-border">
-                            <SelectItem value="popularity">Popularity</SelectItem>
-                            <SelectItem value="rating">Rating</SelectItem>
-                            <SelectItem value="latest">Latest Updates</SelectItem>
-                            <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                            <SelectItem value="popularity">{t('filters.popularity')}</SelectItem>
+                            <SelectItem value="rating">{t('filters.rating')}</SelectItem>
+                            <SelectItem value="latest">{t('filters.latestUpdates')}</SelectItem>
+                            <SelectItem value="alphabetical">{t('filters.alphabetical')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -312,18 +314,18 @@ const CataloguePage = () => {
                       {/* Status */}
                       <div>
                         <label className="text-manga-text text-sm font-medium mb-2 block">
-                          Status
+                          {t('filters.status')}
                         </label>
                         <Select value={status} onValueChange={(value) => setStatus(value as SeriesStatus | "all")}>
                           <SelectTrigger className="bg-manga-darker border-manga-border text-manga-text">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="bg-manga-card border-manga-border">
-                            <SelectItem value="all">All</SelectItem>
-                            <SelectItem value="ongoing">Ongoing</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                            <SelectItem value="hiatus">Hiatus</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                            <SelectItem value="all">{t('filters.all')}</SelectItem>
+                            <SelectItem value="ongoing">{t('filters.ongoing')}</SelectItem>
+                            <SelectItem value="completed">{t('filters.completed')}</SelectItem>
+                            <SelectItem value="hiatus">{t('filters.hiatus')}</SelectItem>
+                            <SelectItem value="cancelled">{t('filters.cancelled')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -331,10 +333,10 @@ const CataloguePage = () => {
                       {/* Categories */}
                       <div>
                         <label className="text-manga-text text-sm font-medium mb-2 block">
-                          Categories
+                          {t('filters.categories')}
                         </label>
                         {categoriesLoading ? (
-                          <LoadingState message="Loading categories..." className="py-4" />
+                          <LoadingState message={t('loading.loadingCategories')} className="py-4" />
                         ) : categoriesError ? (
                           <p className="text-manga-danger text-sm">Failed to load categories</p>
                         ) : (
@@ -365,13 +367,13 @@ const CataloguePage = () => {
                           onClick={clearFilters}
                           className="flex-1 border-manga-border text-manga-text hover:text-manga-primary"
                         >
-                          Clear All
+                          {t('filters.clearAll')}
                         </Button>
                         <Button 
                           onClick={() => setFiltersOpen(false)}
                           className="flex-1 bg-manga-primary hover:bg-manga-primary-hover text-manga-dark"
                         >
-                          Apply Filters
+                          {t('filters.applyFilters')}
                         </Button>
                       </div>
                     </div>
@@ -382,7 +384,7 @@ const CataloguePage = () => {
 
             {/* Main Content Area */}
             {seriesLoading ? (
-              <LoadingState message="Loading manga catalogue..." className="py-24" />
+              <LoadingState message={t('loading.loadingManga')} className="py-24" />
             ) : seriesError ? (
               <ErrorPage 
                 error={seriesError} 
@@ -393,10 +395,10 @@ const CataloguePage = () => {
               <div className="flex flex-col items-center justify-center py-24 text-center">
                 <Search className="w-16 h-16 text-manga-text-muted mb-4" />
                 <h3 className="text-xl font-bold text-manga-text mb-2">
-                  No manga found
+                  {t('search.noMangaFound')}
                 </h3>
                 <p className="text-manga-text-muted mb-4">
-                  Try adjusting your search criteria or clearing filters.
+                  {t('search.tryAdjusting')}
                 </p>
                 <Button 
                   onClick={clearFilters}

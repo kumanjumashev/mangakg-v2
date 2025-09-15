@@ -9,8 +9,10 @@ import { ErrorPage } from "@/components/ui/error-page";
 import { BookOpen, Calendar, User, Eye, Play, ChevronLeft, ChevronRight } from "lucide-react";
 // TODO: Re-enable for v2 - import { Star, Heart, Bookmark } from "lucide-react";
 import { useSeriesDetail, useChaptersList } from "@/hooks/useApi";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const MangaDetailsPage = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   // TODO: Re-enable for v2
   // const [isInFavorites, setIsInFavorites] = useState(false);
@@ -118,14 +120,11 @@ const MangaDetailsPage = () => {
                       </span>
                     </div> */}
                     <Badge className={getStatusColor(seriesData.status)}>
-                      {seriesData.status.charAt(0).toUpperCase() + seriesData.status.slice(1)}
+                      {t(`manga.status.${seriesData.status}`)}
                     </Badge>
-                    <div className="flex items-center text-manga-text-muted">
-                      <span className="text-sm">{seriesData.chapter_count} chapters</span>
-                    </div>
                     {seriesData.licensed && (
                       <Badge className="bg-green-600 text-white">
-                        Licensed
+                        {t('manga.licensed')}
                       </Badge>
                     )}
                   </div>
@@ -145,7 +144,7 @@ const MangaDetailsPage = () => {
                     >
                       <Link to={`/read/${seriesData.chapters?.[0]?.id || 1}`}>
                         <Play className="w-4 h-4 mr-2" />
-                        {seriesData.latest_chapter ? "Start Reading" : "Start Reading"}
+                        {t('manga.startReading')}
                       </Link>
                     </Button>
                     {/* TODO: Implement favorites and bookmarks for v2 */}
@@ -155,7 +154,7 @@ const MangaDetailsPage = () => {
                       className={isInFavorites ? "bg-red-600 hover:bg-red-700" : ""}
                     >
                       <Heart className={`w-4 h-4 mr-2 ${isInFavorites ? "fill-current" : ""}`} />
-                      {isInFavorites ? "In Favorites" : "Add to Favorites"}
+                      {isInFavorites ? t('manga.inFavorites') : t('manga.addToFavorites')}
                     </Button>
                     <Button
                       variant="secondary"
@@ -179,7 +178,7 @@ const MangaDetailsPage = () => {
               {seriesData.description && (
                 <Card className="bg-manga-card border-manga-border mb-6">
                   <CardContent className="p-6">
-                    <h3 className="text-xl font-bold text-manga-text mb-3">Description</h3>
+                    <h3 className="text-xl font-bold text-manga-text mb-3">{t('manga.description')}</h3>
                     <p className="text-manga-text-muted leading-relaxed">
                       {seriesData.description}
                     </p>
@@ -191,7 +190,7 @@ const MangaDetailsPage = () => {
               <Card className="bg-manga-card border-manga-border">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-manga-text">Chapters</h3>
+                    <h3 className="text-xl font-bold text-manga-text">{t('manga.chapters')}</h3>
                     <span className="text-manga-text-muted">
                       {seriesData.chapter_count || 0} chapters
                     </span>
@@ -222,7 +221,7 @@ const MangaDetailsPage = () => {
                               <BookOpen className="w-4 h-4 text-manga-text-muted mr-3" />
                               <div>
                                 <span className="text-manga-text group-hover:text-manga-primary font-medium">
-                                  Chapter {chapter.number}: {chapter.title}
+                                  {t('manga.chapterNumber', { number: chapter.number, title: chapter.title })}
                                 </span>
                               </div>
                             </div>
@@ -280,18 +279,18 @@ const MangaDetailsPage = () => {
             <div>
               <Card className="bg-manga-card border-manga-border">
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-bold text-manga-text mb-4">Information</h3>
+                  <h3 className="text-lg font-bold text-manga-text mb-4">{t('manga.information')}</h3>
                   
                   <div className="space-y-3">
                     <div>
-                      <span className="text-manga-text-muted text-sm">Status</span>
+                      <span className="text-manga-text-muted text-sm">{t('filters.status')}</span>
                       <p className="text-manga-text font-medium">
-                        {seriesData.status.charAt(0).toUpperCase() + seriesData.status.slice(1)}
+                        {t(`manga.status.${seriesData.status}`)}
                       </p>
                     </div>
                     
                     <div>
-                      <span className="text-manga-text-muted text-sm">Type</span>
+                      <span className="text-manga-text-muted text-sm">{t('manga.type')}</span>
                       <p className="text-manga-text font-medium">
                         {seriesData.kind.charAt(0).toUpperCase() + seriesData.kind.slice(1)}
                       </p>
@@ -299,7 +298,7 @@ const MangaDetailsPage = () => {
                     
                     {seriesData.authors.length > 0 && (
                       <div>
-                        <span className="text-manga-text-muted text-sm">Authors</span>
+                        <span className="text-manga-text-muted text-sm">{t('manga.authors')}</span>
                         <p className="text-manga-text font-medium">
                           {seriesData.authors.map(author => author.name).join(", ")}
                         </p>
@@ -308,7 +307,7 @@ const MangaDetailsPage = () => {
                     
                     {seriesData.artists.length > 0 && (
                       <div>
-                        <span className="text-manga-text-muted text-sm">Artists</span>
+                        <span className="text-manga-text-muted text-sm">{t('manga.artists')}</span>
                         <p className="text-manga-text font-medium">
                           {seriesData.artists.map(artist => artist.name).join(", ")}
                         </p>
@@ -316,28 +315,28 @@ const MangaDetailsPage = () => {
                     )}
                     
                     <div>
-                      <span className="text-manga-text-muted text-sm">Content Rating</span>
+                      <span className="text-manga-text-muted text-sm">{t('manga.contentRating')}</span>
                       <p className="text-manga-text font-medium">
                         {seriesData.rating.charAt(0).toUpperCase() + seriesData.rating.slice(1)}
                       </p>
                     </div>
                     
                     <div>
-                      <span className="text-manga-text-muted text-sm">Chapters</span>
+                      <span className="text-manga-text-muted text-sm">{t('manga.chapters')}</span>
                       <p className="text-manga-text font-medium">
                         {seriesData.chapter_count}
                       </p>
                     </div>
 
                     <div>
-                      <span className="text-manga-text-muted text-sm">Last Updated</span>
+                      <span className="text-manga-text-muted text-sm">{t('manga.lastUpdated')}</span>
                       <p className="text-manga-text font-medium">
                         {new Date(seriesData.updated_at).toLocaleDateString()}
                       </p>
                     </div>
                     
                     <div>
-                      <span className="text-manga-text-muted text-sm">Licensed</span>
+                      <span className="text-manga-text-muted text-sm">{t('manga.licensed')}</span>
                       <p className="text-manga-text font-medium">
                         {seriesData.licensed ? "Yes" : "No"}
                       </p>

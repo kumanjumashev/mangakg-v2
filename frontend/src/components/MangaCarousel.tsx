@@ -6,6 +6,7 @@ import { MangaCard } from "./MangaCard";
 import { LoadingState } from "@/components/ui/loading-spinner";
 import { ErrorPage } from "@/components/ui/error-page";
 import { Series } from "@/lib/types";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface MangaCarouselProps {
   title?: string;
@@ -31,6 +32,7 @@ export const MangaCarousel = ({
   error = null,
   onRetry
 }: MangaCarouselProps) => {
+  const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
   
   // Responsive items per view: 2 on mobile, 4 on tablet, 6 on desktop
@@ -77,7 +79,7 @@ export const MangaCarousel = ({
       
       <div className="relative bg-manga-card rounded-xl border border-manga-border p-4 carousel-container">
         {isLoading ? (
-          <LoadingState message={`Loading ${title ? title.toLowerCase() : 'manga'}...`} className="py-12" />
+          <LoadingState message={t('loading.loading')} className="py-12" />
         ) : error ? (
           <ErrorPage error={error} onRetry={onRetry} className="py-8" />
         ) : items.length === 0 ? (

@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Moon, Sun, Search, MessageCircle, Menu, X } from "lucide-react";
+import { Search, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SettingsMenu } from "./SettingsMenu";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export const Header = () => {
+  const { t } = useTranslation();
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved !== null ? JSON.parse(saved) : true;
@@ -67,7 +70,7 @@ export const Header = () => {
                 isActive("/catalogue") ? "text-manga-primary" : "text-manga-text"
               }`}
             >
-              Catalogue
+              {t('navigation.catalogue')}
             </Link>
             <form onSubmit={handleSearch} className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-manga-text-muted w-4 h-4" />
@@ -75,7 +78,7 @@ export const Header = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
-                placeholder="Search manga..."
+                placeholder={t('search.placeholder')}
                 className="pl-10 w-64 bg-manga-card border-manga-border text-manga-text placeholder:text-manga-text-muted"
               />
             </form>
@@ -85,7 +88,7 @@ export const Header = () => {
                 isActive("/about") ? "text-manga-primary" : "text-manga-text"
               }`}
             >
-              About
+              {t('navigation.about')}
             </Link>
             {/* Temporarily hidden - Forum button */}
             {/* <Button variant="ghost" size="sm" className="text-manga-text hover:text-manga-primary">
@@ -96,14 +99,10 @@ export const Header = () => {
 
           {/* Right side buttons */}
           <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleDarkMode}
-              className="text-manga-text hover:text-manga-primary"
-            >
-              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </Button>
+            <SettingsMenu
+              isDarkMode={isDarkMode}
+              onToggleDarkMode={toggleDarkMode}
+            />
 
             {/* Mobile menu button */}
             <Button
@@ -128,7 +127,7 @@ export const Header = () => {
                 }`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Catalogue
+                {t('navigation.catalogue')}
               </Link>
               <Link
                 to="/about"
@@ -137,7 +136,7 @@ export const Header = () => {
                 }`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                About
+                {t('navigation.about')}
               </Link>
               <form onSubmit={handleSearch} className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-manga-text-muted w-4 h-4" />
@@ -145,7 +144,7 @@ export const Header = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={handleSearchKeyPress}
-                  placeholder="Search manga..."
+                  placeholder={t('search.placeholder')}
                   className="pl-10 bg-manga-card border-manga-border text-manga-text placeholder:text-manga-text-muted"
                 />
               </form>
