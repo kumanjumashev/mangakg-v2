@@ -30,7 +30,7 @@
 
     /* Custom manga theme colors */
     --manga-primary: 266, 86%, 56%;
-    --manga-primary-hover: 25 95% 45%;
+    --manga-primary-hover: 266, 86%, 46%;
     --manga-dark: 220 13% 7%;
     --manga-darker: 220 20% 5%;
     --manga-card: 220 13% 10%;
@@ -69,7 +69,7 @@
 
     /* Custom manga theme colors for light mode */
     --manga-primary: 266, 86%, 56%;
-    --manga-primary-hover: 25 95% 45%;
+    --manga-primary-hover: 266, 86%, 46%;
     --manga-dark: 0 0% 100%;
     --manga-darker: 210 40% 98%;
     --manga-card: 0 0% 100%;
