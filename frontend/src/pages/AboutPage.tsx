@@ -29,9 +29,14 @@ const AboutPage = () => {
           <h1 className="text-4xl font-bold text-manga-text text-center mb-12">
             Meet Our Co-Founders
           </h1>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {cofounders.map((cofounder) => (
-              <div key={cofounder.name} className="flex flex-col items-center">
+          <div className="flex flex-col md:grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {cofounders.map((cofounder, index) => (
+              <div
+                key={cofounder.name}
+                className={`flex flex-col items-center ${
+                  index === 1 ? 'order-first md:order-none' : ''
+                }`}
+              >
                 <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-manga-primary mb-4 shadow-lg">
                   <img
                     src={cofounder.image}
