@@ -9,8 +9,8 @@ import contributor2 from "@/assets/team/contributor-2.jpg";
 
 const AboutPage = () => {
   const cofounders = [
-    { name: "Akylbek Usupbaev", image: cofounder1},
     { name: "Kuman Jumashev", image: cofounder2},
+    { name: "Akylbek Usupbaev", image: cofounder1},
     { name: "Aida Meimankanova", image: cofounder3,},
   ];
 

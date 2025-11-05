@@ -397,11 +397,18 @@ class Chapter(models.Model):
             with ZipFile(file_obj) as zf:
                 namelist = sorted(zf.namelist())
                 page_number = 1
-                
+
                 for name in namelist:
                     if zf.getinfo(name).is_dir():
                         continue
-                        
+
+                    # Skip macOS metadata files
+                    filename = os.path.basename(name)
+                    if (name.startswith('__MACOSX/') or
+                        filename.startswith('._') or
+                        filename == '.DS_Store'):
+                        continue
+
                     # Read and validate image
                     data = zf.read(name)
                     try:
