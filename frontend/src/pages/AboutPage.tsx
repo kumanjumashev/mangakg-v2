@@ -5,6 +5,7 @@ import cofounder2 from "@/assets/team/cofounder-2.jpg";
 import cofounder3 from "@/assets/team/cofounder-3.jpg";
 import contributor1 from "@/assets/team/contributor-1.jpg";
 import contributor2 from "@/assets/team/contributor-2.jpg";
+import contributor3 from "@/assets/team/contributor-3.jpg";
 
 
 const AboutPage = () => {
@@ -17,6 +18,7 @@ const AboutPage = () => {
   const contributors = [
     { name: "Alikhan Maratov", image: contributor1 },
     { name: "Mehmet Zhyldyzbek", image: contributor2 },
+    { name: "Isakov Iskhak", image: contributor3 }
   ];
 
   return (
@@ -30,12 +32,10 @@ const AboutPage = () => {
             Meet Our Co-Founders
           </h1>
           <div className="flex flex-col md:grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {cofounders.map((cofounder, index) => (
+            {cofounders.map((cofounder) => (
               <div
                 key={cofounder.name}
-                className={`flex flex-col items-center ${
-                  index === 1 ? 'order-first md:order-none' : ''
-                }`}
+                className="flex flex-col items-center"
               >
                 <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-manga-primary mb-4 shadow-lg">
                   <img

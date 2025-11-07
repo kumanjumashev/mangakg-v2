@@ -4,7 +4,7 @@
 #
 
 app = 'mangakg-backend'
-primary_region = 'waw'
+primary_region = 'fra'
 console_command = '/code/manage.py shell'
 
 [build]

@@ -11,11 +11,13 @@ IMAGE_SIZE = 400  # Size in pixels (width and height)
 BACKGROUND_COLORS = [
     "#10b981",  # Green
     "#f59e0b",  # Orange
+    "#3b82f6",  # Blue
 ]
 
 CONTRIBUTORS = [
     {"name": "Alikhan Maratov", "initials": "AM", "filename": "contributor-1.jpg", "color": "#10b981"},
     {"name": "Mehmet Zhyldyzbek", "initials": "MZ", "filename": "contributor-2.jpg", "color": "#f59e0b"},
+    {"name": "Isakov Iskhak", "initials": "II", "filename": "contributor-3.jpg", "color": "#3b82f6"},
 ]
 
 
